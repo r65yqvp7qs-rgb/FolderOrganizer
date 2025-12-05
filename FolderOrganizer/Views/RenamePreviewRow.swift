@@ -27,7 +27,7 @@ struct RenamePreviewRow: View {
             // 旧
             HStack(alignment: .top, spacing: 4) {
                 Text("旧:")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(AppTheme.colors.oldText)
 
                 Text(original)
@@ -39,7 +39,7 @@ struct RenamePreviewRow: View {
             // 新
             HStack(alignment: .top, spacing: 4) {
                 Text("新:")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(AppTheme.colors.newText)
 
                 DiffBuilder.highlightSpaces(in: normalized)
