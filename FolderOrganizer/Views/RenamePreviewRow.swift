@@ -1,4 +1,3 @@
-//  Views/RenamePreviewRow.swift
 import SwiftUI
 
 struct RenamePreviewRow: View {
@@ -8,7 +7,9 @@ struct RenamePreviewRow: View {
     let isSelected: Bool
     @Binding var flagged: Bool
 
-    // 行の背景色（サブタイトル > 要確認 > 交互）
+    let contentWidth: CGFloat   // ← 幅固定のために追加したパラメータ
+
+    // 🟦 背景色ロジックを戻す（これが必要！！）
     private var backgroundColor: Color {
         if TextClassifier.isSubtitle(normalized) {
             return AppTheme.colors.subtitleBackground
@@ -21,28 +22,30 @@ struct RenamePreviewRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
 
-            // 旧（インデント）
+            // 旧
             HStack(alignment: .top, spacing: 4) {
                 Text("旧:")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(AppTheme.colors.oldText)
+
                 Text(original)
-                    .font(.system(size: 13))
+                    .font(.system(size: 15))
                     .foregroundColor(AppTheme.colors.oldText)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: contentWidth, alignment: .leading)   // ★ 固定幅
             }
 
-            // 新（スペース赤表示）
+            // 新
             HStack(alignment: .top, spacing: 4) {
                 Text("新:")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(AppTheme.colors.newText)
+
                 DiffBuilder.highlightSpaces(in: normalized)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(AppTheme.colors.newText)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(width: contentWidth, alignment: .leading)   // ★ 固定幅
             }
 
             // おかしい？
@@ -52,19 +55,14 @@ struct RenamePreviewRow: View {
                     .foregroundColor(AppTheme.colors.checkLabel)
             }
             .toggleStyle(.checkbox)
-            .padding(.top, 4)
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(backgroundColor)
+        .padding(12)
+        .background(backgroundColor) // ← ★ 修復ポイント
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(
-                    isSelected ? AppTheme.colors.selectedBorder : Color.clear,
-                    lineWidth: 2
-                )
+                .stroke(isSelected ? AppTheme.colors.selectedBorder : .clear,
+                        lineWidth: 2)
         )
-        // 🔵 ここでは「横幅指定」を一切しない
     }
 }
