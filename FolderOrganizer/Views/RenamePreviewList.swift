@@ -1,32 +1,46 @@
+//  Views/RenamePreviewList.swift
+
 import SwiftUI
 
 struct RenamePreviewList: View {
     @Binding var items: [RenameItem]
-    
+
     @State private var selectedIndex: Int = 0
-    
-    var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 0) {
-                ForEach(items.indices, id: \.self) { index in
-                    RenamePreviewRow(
-                        original: items[index].original,
-                        normalized: items[index].normalized,
-                        isOdd: index % 2 == 1,
-                        flagged: $items[index].flagged
-                    )
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedIndex = index
-                        openDetail(index)
-                    }
+
+    // 個別要素の flagged だけをバインディングするヘルパー
+    private func binding(for item: RenameItem) -> Binding<Bool> {
+        Binding(
+            get: {
+                items.first(where: { $0.id == item.id })?.flagged ?? false
+            },
+            set: { newValue in
+                if let index = items.firstIndex(where: { $0.id == item.id }) {
+                    items[index].flagged = newValue
                 }
             }
-            .frame(maxWidth: .infinity) // ペア全体の幅をウィンドウに合わせる
+        )
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                ForEach(items) { item in
+                    RenamePreviewRow(
+                        original: item.original,
+                        normalized: item.normalized,
+                        isOdd: item.id.hashValue % 2 == 0,
+                        flagged: binding(for: item)
+                    )
+                }
+            }
+            // ウィンドウ幅ほぼいっぱい、左右に少し余白だけ
+            .padding(.horizontal, 32)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppTheme.colors.background)
     }
-    
+
+    // 既存の詳細画面オープン通知（必要なら使用）
     func openDetail(_ index: Int) {
         NotificationCenter.default.post(
             name: .openDetailView,

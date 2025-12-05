@@ -1,7 +1,10 @@
-//
-//  Untitled.swift
-//  FolderOrganizer
-//
-//  Created by 望月慎一 on 2025/12/02.
-//
+import SwiftUI
 
+@main
+struct FolderOrganizerApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}

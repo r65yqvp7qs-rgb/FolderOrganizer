@@ -1,3 +1,5 @@
+//  Views/RenamePreviewRow.swift
+
 import SwiftUI
 
 struct RenamePreviewRow: View {
@@ -5,61 +7,66 @@ struct RenamePreviewRow: View {
     let normalized: String
     let isOdd: Bool
     @Binding var flagged: Bool
-    
+
+    // MARK: - 背景色（長音符はここでは判定しない）
+    private var backgroundColor: Color {
+        if TextClassifier.isSubtitle(normalized) {
+            // サブタイトル確定（〜 / ～ / ~ の両端が揃うパターン）
+            return Color.blue.opacity(0.10)
+        }
+        if TextClassifier.isPotentialSubtitle(normalized) {
+            // サブタイトル候補（長音符など：要手動確認）
+            return Color.yellow.opacity(0.12)
+        }
+        // 通常行（シマシマ）
+        return isOdd ? Color.gray.opacity(0.08) : Color.white
+    }
+
+    private var originalTextColor: Color {
+        Color.black.opacity(0.75)
+    }
+
+    private var normalizedTextColor: Color {
+        Color.black
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            
-            // 新
-            HStack(alignment: .top, spacing: 8) {
-                Text("新:")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(AppTheme.colors.newText)
-                
-                DiffBuilder.highlightSpaces(in: normalized)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(AppTheme.colors.newText)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+
+                // 旧
+                Text("旧: \(original)")
+                    .font(.system(size: 15))
+                    .foregroundColor(originalTextColor)
                     .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            // 旧
-            HStack(alignment: .top, spacing: 8) {
-                Text("旧:")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(AppTheme.colors.oldText)
-                
-                Text(original)
-                    .font(.system(size: 14))
-                    .foregroundColor(AppTheme.colors.oldText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            // チェック
-            HStack {
+
+                // 新（␣ を赤＋太字で）
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("新:")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.blue)
+
+                    DiffBuilder.highlightSpaces(in: normalized)
+                        .font(.system(size: 17, weight: .semibold))   // ★ 17pt
+                        .foregroundColor(normalizedTextColor)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // フラグ
                 Toggle(isOn: $flagged) {
                     Text("おかしい？")
+                        .foregroundColor(.gray)
                         .font(.system(size: 13))
                 }
                 .toggleStyle(.checkbox)
-                Spacer()
+                .padding(.top, 4)
             }
-            .padding(.top, 2)
-            
+
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            flagged
-            ? AppTheme.colors.cardFlagged
-            : (isOdd ? AppTheme.colors.cardAlt : AppTheme.colors.card)
-        )
-        .overlay(
-            Rectangle()
-                .frame(height: 0.5)
-                .foregroundColor(AppTheme.colors.border),
-            alignment: .bottom
-        )
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)   // ★ 行幅を親いっぱいに
+        .background(backgroundColor)
+        .cornerRadius(6)
     }
 }
