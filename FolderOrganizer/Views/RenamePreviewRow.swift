@@ -1,5 +1,3 @@
-//  Views/RenamePreviewRow.swift
-
 import SwiftUI
 
 struct RenamePreviewRow: View {
@@ -8,65 +6,44 @@ struct RenamePreviewRow: View {
     let isOdd: Bool
     @Binding var flagged: Bool
 
-    // MARK: - 背景色（長音符はここでは判定しない）
     private var backgroundColor: Color {
         if TextClassifier.isSubtitle(normalized) {
-            // サブタイトル確定（〜 / ～ / ~ の両端が揃うパターン）
-            return Color.blue.opacity(0.10)
+            return AppTheme.colors.subtitle          // 〜〜 あり → 薄い青
         }
         if TextClassifier.isPotentialSubtitle(normalized) {
-            // サブタイトル候補（長音符など：要手動確認）
-            return Color.yellow.opacity(0.12)
+            return AppTheme.colors.maybeSubtitle     // ー あり → 薄い黄
         }
-        // 通常行（シマシマ）
-        return isOdd ? Color.gray.opacity(0.08) : Color.white
-    }
-
-    private var originalTextColor: Color {
-        Color.black.opacity(0.75)
-    }
-
-    private var normalizedTextColor: Color {
-        Color.black
+        return isOdd ? AppTheme.colors.rowStripe : AppTheme.colors.rowAltStripe
     }
 
     var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("旧:")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.secondary)
 
-                // 旧
-                Text("旧: \(original)")
-                    .font(.system(size: 15))
-                    .foregroundColor(originalTextColor)
-                    .fixedSize(horizontal: false, vertical: true)
+            Text(original)
+                .font(.system(size: 15))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
-                // 新（␣ を赤＋太字で）
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text("新:")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.blue)
+            Text("新:")
+                .font(.system(size: 13, weight: .bold))
 
-                    DiffBuilder.highlightSpaces(in: normalized)
-                        .font(.system(size: 17, weight: .semibold))   // ★ 17pt
-                        .foregroundColor(normalizedTextColor)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+            DiffBuilder.highlightSpaces(in: normalized)
+                .font(.system(size: 17))                     // ★ Q2: フォント 17
+                .foregroundColor(AppTheme.colors.newText)
+                .fixedSize(horizontal: false, vertical: true)
 
-                // フラグ
-                Toggle(isOn: $flagged) {
-                    Text("おかしい？")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 13))
-                }
-                .toggleStyle(.checkbox)
-                .padding(.top, 4)
+            Toggle(isOn: $flagged) {
+                Text("おかしい？")
+                    .font(.system(size: 12))
             }
-
-            Spacer(minLength: 0)
+            .toggleStyle(.checkbox)
+            .padding(.top, 4)
         }
         .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)   // ★ 行幅を親いっぱいに
         .background(backgroundColor)
-        .cornerRadius(6)
+        .cornerRadius(8)
     }
 }
