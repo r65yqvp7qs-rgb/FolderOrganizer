@@ -2,62 +2,66 @@
 import SwiftUI
 
 struct RenamePreviewRow: View {
-    let original: String
-    let normalized: String
-    let isOdd: Bool
-    let isSelected: Bool
-    @Binding var flagged: Bool
 
-    private var backgroundColor: Color {
-        if TextClassifier.isSubtitle(normalized) {
-            return AppTheme.colors.subtitleBackground
-        }
-        if TextClassifier.isPotentialSubtitle(normalized) {
-            return AppTheme.colors.potentialSubtitleBackground
-        }
-        return isOdd ? AppTheme.colors.cardBackground
-                     : AppTheme.colors.rowAltBackground
-    }
+    let item: RenameItem
+    let index: Int
+    @Binding var flagged: Bool
+    let isSelected: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+
+        /// 背景色ロジック
+        let background: Color = {
+            if item.isSubtitle {
+                return AppTheme.colors.subtitleBackground
+            } else if item.isPotentialSubtitle {
+                return AppTheme.colors.potentialSubtitleBackground
+            } else {
+                return index.isMultiple(of: 2)
+                    ? AppTheme.colors.rowAltBackground
+                    : AppTheme.colors.cardBackground
+            }
+        }()
+
+        VStack(alignment: .leading, spacing: 6) {
 
             // 旧
-            HStack(alignment: .top, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
                 Text("旧:")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppTheme.colors.oldText)
-                Text(original)
-                    .font(.system(size: 15))
-                    .foregroundColor(AppTheme.colors.oldText)
-                    .fixedSize(horizontal: false, vertical: true)
+                Text(item.original)
+                    .font(.system(size: 13))
+                    .foregroundColor(.primary)
             }
 
             // 新
-            HStack(alignment: .top, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
                 Text("新:")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppTheme.colors.newText)
-                DiffBuilder.highlightSpaces(in: normalized)
-                    .font(.system(size: 15, weight: .semibold))
+                Text(item.normalized)
+                    .font(.system(size: 13))
                     .foregroundColor(AppTheme.colors.newText)
             }
 
-            Toggle("おかしい？", isOn: $flagged)
-                .font(.system(size: 12))
-                .toggleStyle(.checkbox)
-                .padding(.top, 2)
+            Toggle(isOn: $flagged) {
+                Text("おかしい？")
+                    .font(.system(size: 11))
+                    .foregroundColor(AppTheme.colors.checkLabel)
+            }
+            .toggleStyle(.checkbox)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        // 🔴 行全体を左右いっぱいに
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(backgroundColor)
-        .cornerRadius(10)
+        .frame(maxWidth: .infinity, alignment: .leading)   // ← ★これ！
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(background)
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(isSelected ? AppTheme.colors.selectedBorder : .clear, lineWidth: 2)
         )
-        .contentShape(Rectangle())
     }
 }

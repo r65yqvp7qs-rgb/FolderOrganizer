@@ -26,7 +26,7 @@ struct RenameDetailView: View {
     var body: some View {
         ZStack {
             // うっすら暗く（後ろの一覧）が見えるオーバーレイ
-            Color.black.opacity(0.55)
+            Color.black.opacity(0.35)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -112,7 +112,7 @@ struct RenameDetailView: View {
             .frame(width: 720, height: 420)
             .background(detailBackgroundColor)
             .cornerRadius(18)
-            .shadow(radius: 14)
+            .shadow(radius: 8)
         }
         // キーボード操作
         .onKeyDown { event in

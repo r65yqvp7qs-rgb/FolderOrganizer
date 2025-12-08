@@ -13,7 +13,7 @@ struct ContentView: View {
 
     // 編集ポップアップ
     @State private var showingEdit = false
-    @State private var editBuffer: String = ""   // 下段：編集中テキスト
+    @State private var editText: String = ""   // 編集用テキスト
 
     // MARK: - Body
 
@@ -48,7 +48,7 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppTheme.colors.background)
 
-        // MARK: 詳細ポップアップ
+        // MARK: - 詳細ポップアップ
         .sheet(isPresented: $showingDetail) {
             if let idx = selectedIndex {
                 RenameDetailView(
@@ -62,12 +62,8 @@ struct ContentView: View {
                     },
                     onEdit: {
                         let item = items[idx]
-
-                        // 下段の初期値：
-                        // まだ自動正規化のまま => 旧から編集開始
-                        // すでにユーザー編集済み => 直近の新から編集開始
-                        editBuffer = initialEditText(for: item)
-
+                        // 「初回だけ旧／2回目以降は新」の判定
+                        editText = initialEditText(for: item)
                         showingDetail = false
                         DispatchQueue.main.async {
                             showingEdit = true
@@ -77,13 +73,13 @@ struct ContentView: View {
             }
         }
 
-        // MARK: 編集ポップアップ
+        // MARK: - 編集ポップアップ
         .sheet(isPresented: $showingEdit) {
             RenameEditView(
-                editText: $editBuffer,
+                editText: $editText,
                 onCommit: { newText in
                     if let idx = selectedIndex {
-                        items[idx].normalized = newText   // 新に保存
+                        items[idx].normalized = newText
                     }
                     showingEdit = false
                     showingDetail = true
@@ -102,21 +98,19 @@ struct ContentView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    let allIndices = items.indices
 
-                    ForEach(allIndices, id: \.self) { index in
-                        let item = items[index]
-                        let isOdd = index.isMultiple(of: 2)
+                    // (index, item) で列挙
+                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                         let isSelected = (selectedIndex == index)
 
                         RenamePreviewRow(
-                            original: item.original,
-                            normalized: item.normalized,
-                            isOdd: isOdd,
-                            isSelected: isSelected,
-                            flagged: $items[index].flagged
+                            item: item,
+                            index: index,
+                            flagged: $items[index].flagged,
+                            isSelected: isSelected
                         )
                         .id(index)
+                        .frame(maxWidth: .infinity, alignment: .leading)   // ← 追加！
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedIndex = index
@@ -124,6 +118,7 @@ struct ContentView: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 16)
             }
@@ -131,13 +126,30 @@ struct ContentView: View {
             .onKeyDown { event in
                 handleKey(event, proxy: proxy)
             }
+            .onAppear {
+                if let idx = selectedIndex {
+                    scrollToCenter(proxy, idx)
+                }
+            }
         }
+    }
+
+    // フラグ用の Binding を個別に作る
+    private func bindingForFlag(at index: Int) -> Binding<Bool> {
+        Binding(
+            get: { items[index].flagged },
+            set: { items[index].flagged = $0 }
+        )
     }
 
     // MARK: - キー操作（一覧）
 
     private func handleKey(_ event: NSEvent, proxy: ScrollViewProxy) {
-        if showingDetail || showingEdit { return }
+        // 詳細 or 編集を表示している間は一覧のキー操作は無効
+        if showingDetail || showingEdit {
+            return
+        }
+
         guard !items.isEmpty else { return }
 
         let current = selectedIndex ?? 0
@@ -146,12 +158,15 @@ struct ContentView: View {
         switch event.keyCode {
         case 126: // ↑
             newIndex = max(current - 1, 0)
+
         case 125: // ↓
             newIndex = min(current + 1, items.count - 1)
+
         case 36, 76: // Enter / Return
             selectedIndex = current
             openDetail()
             return
+
         default:
             return
         }
@@ -238,7 +253,7 @@ struct ContentView: View {
 
     // MARK: - 編集用ヘルパー
 
-    /// 「初回だけ旧／2回目以降は新」の判定
+    /// 「初回だけ旧／2回目以降は新」を判定して返す
     private func initialEditText(for item: RenameItem) -> String {
         let autoNormalized = NameNormalizer.normalize(item.original)
 
@@ -246,8 +261,17 @@ struct ContentView: View {
             // まだ自動正規化のまま → 旧から編集開始
             return item.original
         } else {
-            // すでに一度以上編集済み → 直近の新から編集
+            // 一度以上編集済み → 直近の新から編集
             return item.normalized
+        }
+    }
+
+    // スクロール中央寄せ関数
+    private func scrollToCenter(_ proxy: ScrollViewProxy, _ index: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            withAnimation {
+                proxy.scrollTo(index, anchor: .center)
+            }
         }
     }
 }

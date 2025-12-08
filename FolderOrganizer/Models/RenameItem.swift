@@ -1,14 +1,21 @@
 // Models/RenameItem.swift
 import Foundation
 
-/// 一覧・詳細で共有するデータモデル
+/// 1行ぶんのリネームデータ
 struct RenameItem: Identifiable, Hashable {
     let id = UUID()
 
-    let original: String          // 元名
-    var normalized: String        // 正規化後の名前
-    var flagged: Bool             // 手動フラグ（「おかしい？」）
+    var original: String      // 元名
+    var normalized: String    // 正規化後（＝「新」）
+    var flagged: Bool         // 「おかしい？」フラグ
 
-    /// 手動修正結果（未修正なら nil）
-    var manual: String?
+    /// 自動でサブタイトルと判定されたもの
+    var isSubtitle: Bool {
+        TextClassifier.isSubtitle(normalized)
+    }
+
+    /// サブタイトルの可能性あり（要チェック）
+    var isPotentialSubtitle: Bool {
+        TextClassifier.isPotentialSubtitle(normalized)
+    }
 }

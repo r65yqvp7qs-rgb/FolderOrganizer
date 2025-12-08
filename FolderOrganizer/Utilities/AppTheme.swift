@@ -1,44 +1,57 @@
+// Utilities/AppTheme.swift
 import SwiftUI
 import AppKit
 
 enum AppTheme {
     struct colors {
 
-        // MARK: - 全体背景
+        // MARK: - 全体背景（ウインドウ背景に合わせる）
         static let background = Color(NSColor.windowBackgroundColor)
 
         // MARK: - 行背景（通常 / 交互）
+        /// 通常行の背景
         static let cardBackground = Color(NSColor.textBackgroundColor)
+
+        /// 交互行（オルタネート行）の背景
         static let rowAltBackground = Color(NSColor.underPageBackgroundColor)
 
-        // マーカーを邪魔しない薄い区切り線
+        /// 行の区切り線などに使う薄い線
         static let rowSeparator = Color(NSColor.separatorColor)
 
-        // MARK: - サブタイトル行
-        // 信頼度の高い判定（自動OK）
+        // MARK: - サブタイトル系（将来用）
+        /// サブタイトル確定（自動判定 OK）
         static let subtitleBackground =
             Color(NSColor.systemBlue.withAlphaComponent(0.15))
 
-        // 要チェック（候補）
+        /// サブタイトル候補（要チェック）
         static let potentialSubtitleBackground =
             Color(NSColor.systemOrange.withAlphaComponent(0.18))
 
-        // ニュートラルな背景
+        /// ニュートラルな背景
         static let neutralBackground = cardBackground
 
-        // MARK: - テキスト色
+        // MARK: - テキスト
+        /// アプリタイトルなど
         static let titleText = Color(NSColor.labelColor)
-        static let oldText = Color(NSColor.secondaryLabelColor)
-        static let newText = Color(NSColor.systemBlue)  // ここは強めの Blue にする
 
-        // チェックラベルなど
+        /// 「旧:」ラベルなど
+        static let oldText = Color(NSColor.secondaryLabelColor)
+
+        /// 「新:」ラベルや新タイトル
+        static let newText = Color(NSColor.systemBlue)
+
+        /// チェックボックス横のラベルなど
         static let checkLabel = Color(NSColor.tertiaryLabelColor)
 
         // MARK: - スペースマーカー
+        /// 半角スペース用表示色
         static let spaceMarkerHalf = Color(NSColor.systemRed)
+
+        /// 全角スペース用表示色
         static let spaceMarkerFull = Color(NSColor.systemBlue)
 
-        // MARK: - 行選択枠（青）
+        // MARK: - 行選択枠
+        /// 選択されている行の枠線色
         static let selectedBorder = Color(NSColor.controlAccentColor)
     }
 }
