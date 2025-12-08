@@ -26,7 +26,7 @@ struct RenameDetailView: View {
     var body: some View {
         ZStack {
             // うっすら暗く（後ろの一覧）が見えるオーバーレイ
-            Color.black.opacity(0.35)
+            Color.black.opacity(0.15)
                 .ignoresSafeArea()
                 .contentShape(Rectangle())
                 .onTapGesture {

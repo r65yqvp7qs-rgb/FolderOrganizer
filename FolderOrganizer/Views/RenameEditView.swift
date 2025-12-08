@@ -15,7 +15,7 @@ struct RenameEditView: View {
     var body: some View {
         ZStack {
             // 背景暗幕
-            Color.black.opacity(0.25)
+            Color.black.opacity(0.15)
                 .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 18) {

@@ -48,22 +48,24 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppTheme.colors.background)
 
-        // MARK: - 詳細ポップアップ
+        // ==== 詳細ポップアップ ====
         .sheet(isPresented: $showingDetail) {
-            if let idx = selectedIndex {
+            if let idx = selectedIndex, items.indices.contains(idx) {
                 RenameDetailView(
                     item: items[idx],
                     index: idx,
                     total: items.count,
                     onPrev: { moveSelection(delta: -1) },
                     onNext: { moveSelection(delta: +1) },
-                    onClose: {
-                        showingDetail = false
-                    },
+                    onClose: { showingDetail = false },
                     onEdit: {
-                        let item = items[idx]
-                        // 「初回だけ旧／2回目以降は新」の判定
+                        // ★ ここがポイント：必ず selectedIndex を見直す
+                        guard let current = selectedIndex,
+                              items.indices.contains(current) else { return }
+
+                        let item = items[current]
                         editText = initialEditText(for: item)
+
                         showingDetail = false
                         DispatchQueue.main.async {
                             showingEdit = true
@@ -73,44 +75,41 @@ struct ContentView: View {
             }
         }
 
-        // MARK: - 編集ポップアップ
+        // ==== 編集ポップアップ ====
         .sheet(isPresented: $showingEdit) {
             RenameEditView(
                 editText: $editText,
                 onCommit: { newText in
-                    if let idx = selectedIndex {
+                    if let idx = selectedIndex,
+                       items.indices.contains(idx) {
                         items[idx].normalized = newText
                     }
                     showingEdit = false
-                    showingDetail = true
+                    showingDetail = true      // 編集後は同じ項目の詳細に戻る
                 },
                 onCancel: {
                     showingEdit = false
-                    showingDetail = true
+                    showingDetail = true      // キャンセルでも元の詳細に戻る
                 }
             )
         }
     }
 
-    // MARK: - LIST VIEW
-
     private var listView: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 12) {
-
-                    // (index, item) で列挙
-                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                    ForEach(items.indices, id: \.self) { index in
+                        let item = items[index]
                         let isSelected = (selectedIndex == index)
 
                         RenamePreviewRow(
                             item: item,
                             index: index,
-                            flagged: $items[index].flagged,
+                            flagged: bindingForFlag(at: index),
                             isSelected: isSelected
                         )
                         .id(index)
-                        .frame(maxWidth: .infinity, alignment: .leading)   // ← 追加！
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedIndex = index
@@ -118,13 +117,18 @@ struct ContentView: View {
                         }
                     }
                 }
-                .frame(maxWidth: .infinity)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 16)
             }
             .focusable(true)
             .onKeyDown { event in
                 handleKey(event, proxy: proxy)
+            }
+            // ★ selectedIndex が変わるたびに中央へ（詳細表示中も効く）
+            .onChange(of: selectedIndex) { _, newValue in
+                if let idx = newValue {
+                    scrollToCenter(proxy, idx)
+                }
             }
             .onAppear {
                 if let idx = selectedIndex {
@@ -134,11 +138,17 @@ struct ContentView: View {
         }
     }
 
-    // フラグ用の Binding を個別に作る
+    // フラグ用 Binding を安全に取り出すヘルパ
     private func bindingForFlag(at index: Int) -> Binding<Bool> {
         Binding(
-            get: { items[index].flagged },
-            set: { items[index].flagged = $0 }
+            get: {
+                guard items.indices.contains(index) else { return false }
+                return items[index].flagged
+            },
+            set: { newValue in
+                guard items.indices.contains(index) else { return }
+                items[index].flagged = newValue
+            }
         )
     }
 
