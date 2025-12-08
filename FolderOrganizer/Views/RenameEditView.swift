@@ -1,73 +1,101 @@
+//  Views/RenameEditView.swift
 import SwiftUI
 
 struct RenameEditView: View {
 
-    @Binding var editText: String
+    @Binding var editText: String     // 下段：編集中（新）
     let onCommit: (String) -> Void
     let onCancel: () -> Void
 
+    @FocusState private var isEditorFocused: Bool
+
     var body: some View {
         ZStack {
-            // 背景の暗幕
-            Color.black.opacity(0.45)
+            // 背景を少し暗くしてモーダル感だけ出す
+            Color.black.opacity(0.25)
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 18) {
 
-                Text("修正（Enter で反映 / Esc でキャンセル）")
+                // タイトル
+                Text("名前の修正（Esc でキャンセル）")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.blue)
 
-                // ===========================
-                // ↑ スペースマーカー表示
-                // 折り返し可能 & 高さ固定
-                // ===========================
+                // 上段：リアルタイム・プレビュー（スペースマーカー付き）
                 ScrollView {
-                    DiffBuilder.highlightSpaces(in: editText)
-                        .font(.system(size: 16, weight: .semibold, design: .monospaced))
+                    Text(previewText(from: editText))
+                        .font(.system(size: 20, weight: .regular, design: .monospaced))
                         .foregroundColor(.black)
-                        .padding(10)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.white)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 10)
                 }
-                .frame(height: 80) // ← ここで高さ確保
+                .frame(minHeight: 70, idealHeight: 90, maxHeight: 110)
                 .background(Color.white)
-                .cornerRadius(8)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                 )
+                .cornerRadius(14)
 
-                // ===========================
-                // ↓ 実際の編集エリア
-                // ===========================
-                MonospaceTextEditor(
-                    text: $editText,
-                    onCommit: { onCommit(editText) },
-                    onCancel: onCancel
-                )
-                .frame(minHeight: 180, maxHeight: 260)
-                .background(Color.white)
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                )
+                // 下段：編集欄（スペースマーカーなし）
+                TextEditor(text: $editText)
+                    .font(.system(size: 20, weight: .regular, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+                    .background(Color.white)
+                    .foregroundColor(.black)
+                    .frame(minHeight: 110, idealHeight: 140, maxHeight: 170)
+                    .padding(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.blue.opacity(0.6), lineWidth: 1.2)
+                    )
+                    .focused($isEditorFocused)
+                    // 改行禁止（macOS 14 の新 onChange シグネチャ）
+                    .onChange(of: editText) { _, newValue in
+                        let cleaned = newValue.replacingOccurrences(of: "\n", with: "")
+                        if cleaned != newValue {
+                            editText = cleaned
+                        }
+                    }
 
-                Spacer(minLength: 0)
+                HStack(spacing: 16) {
+                    Spacer()
+
+                    Button("キャンセル") {
+                        onCancel()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("反映") {
+                        onCommit(editText)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)   // 少し大きめに
+                }
+                .padding(.top, 4)
             }
-            .padding(28)
-            .frame(width: 760, height: 420)
-            .background(Color.white)
-            .cornerRadius(18)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 24)
+            .background(Color(.windowBackgroundColor))   // 白系〜薄グレー
+            .cornerRadius(22)
+            .shadow(radius: 18)
+            .frame(maxWidth: 900)   // 詳細ポップアップよりちょっと狭い想定
         }
-        // Enter / Esc をフック
-        .onKeyDown { event in
-            switch event.keyCode {
-            case 36, 76: onCommit(editText)  // Enter
-            case 53:     onCancel()          // Esc
-            default: break
-            }
+        .onAppear {
+            isEditorFocused = true
         }
+        .onExitCommand {
+            onCancel()
+        }
+    }
+
+    // MARK: - プレビュー用ヘルパー
+
+    /// スペースにマーカーを付けた文字列を生成（半角:␣ / 全角:▢）
+    private func previewText(from text: String) -> String {
+        text
+            .replacingOccurrences(of: " ", with: "␣")
+            .replacingOccurrences(of: "　", with: "▢")
     }
 }

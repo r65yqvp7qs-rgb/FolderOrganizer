@@ -21,13 +21,11 @@ struct MonospaceTextEditor: View {
                 moveCursorToEnd()
             }
             // Enter
-            .onKeyPress(.return) {
-                onCommit()
+            .onKeyPress(.return) {      // 引数なし                onCommit()
                 return .handled
             }
             // Esc
-            .onKeyPress(.escape) {
-                onCancel()
+            .onKeyPress(.escape) {      // 引数なし                onCancel()
                 return .handled
             }
     }

@@ -13,33 +13,30 @@ struct ContentView: View {
 
     // 編集ポップアップ
     @State private var showingEdit = false
-    @State private var editText: String = ""   // 編集用テキスト（旧のコピー）
+    @State private var editBuffer: String = ""   // 下段：編集中テキスト
 
     // MARK: - Body
 
     var body: some View {
         ZStack {
-            VStack(spacing: 24) {
-
-                // タイトル
+            VStack(spacing: 20) {
                 Text("FolderOrganizer")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.blue)
-                    .padding(.top, 20)
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(AppTheme.colors.titleText)
 
-                // フォルダ読み込みボタン
-                Button(action: selectFolderAndLoad) {
-                    Text("フォルダを読み込む")
-                        .font(.system(size: 16, weight: .semibold))
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 10)
-                        .background(AppTheme.colors.primaryButton)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
+                HStack(spacing: 16) {
+                    Button("フォルダを読み込む") {
+                        selectFolderAndLoad()
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("JSONを書き出す") {
+                        exportJSON()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(items.isEmpty)
                 }
-                .buttonStyle(.plain)
 
-                // 一覧
                 if items.isEmpty {
                     Spacer()
                 } else {
@@ -50,63 +47,52 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppTheme.colors.background)
-        // 詳細シート
-        .sheet(isPresented: $showingDetail) {
-            if !items.isEmpty {
-                let index = selectedIndex ?? 0
 
+        // MARK: 詳細ポップアップ
+        .sheet(isPresented: $showingDetail) {
+            if let idx = selectedIndex {
                 RenameDetailView(
-                    item: items[index],
-                    index: index,
+                    item: items[idx],
+                    index: idx,
                     total: items.count,
-                    onPrev: {
-                        moveSelection(delta: -1)
-                    },
-                    onNext: {
-                        moveSelection(delta: +1)
-                    },
+                    onPrev: { moveSelection(delta: -1) },
+                    onNext: { moveSelection(delta: +1) },
                     onClose: {
                         showingDetail = false
                     },
                     onEdit: {
-                        // 旧の文字列を編集テキストとしてコピー
-                        if let current = selectedIndex {
-                            editText = items[current].original
-                        } else {
-                            selectedIndex = index
-                            editText = items[index].original
-                        }
-                        // 詳細を閉じて編集モードへ
+                        let item = items[idx]
+
+                        // 下段の初期値：
+                        // まだ自動正規化のまま => 旧から編集開始
+                        // すでにユーザー編集済み => 直近の新から編集開始
+                        editBuffer = initialEditText(for: item)
+
                         showingDetail = false
-                        showingEdit = true
+                        DispatchQueue.main.async {
+                            showingEdit = true
+                        }
                     }
                 )
-            } else {
-                Text("項目がありません")
-                    .padding(40)
             }
         }
-        // 編集シート
+
+        // MARK: 編集ポップアップ
         .sheet(isPresented: $showingEdit) {
-            if let idx = selectedIndex, idx < items.count {
-                RenameEditView(
-                    editText: $editText,
-                    onCommit: { newText in
-                        // 保存：編集結果を「新」に反映
-                        items[idx].normalized = newText
-                        showingEdit = false
-                        showingDetail = true     // いったん詳細へ戻る
-                    },
-                    onCancel: {
-                        // 破棄：元の詳細に戻る
-                        showingEdit = false
-                        showingDetail = true
+            RenameEditView(
+                editText: $editBuffer,
+                onCommit: { newText in
+                    if let idx = selectedIndex {
+                        items[idx].normalized = newText   // 新に保存
                     }
-                )
-            } else {
-                Text("編集対象がありません")
-                    .padding(40)
-            }
+                    showingEdit = false
+                    showingDetail = true
+                },
+                onCancel: {
+                    showingEdit = false
+                    showingDetail = true
+                }
+            )
         }
     }
 
@@ -116,8 +102,6 @@ struct ContentView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 12) {
-
-                    // indices を変数にするとコンパイラエラーを回避しやすい
                     let allIndices = items.indices
 
                     ForEach(allIndices, id: \.self) { index in
@@ -153,11 +137,7 @@ struct ContentView: View {
     // MARK: - キー操作（一覧）
 
     private func handleKey(_ event: NSEvent, proxy: ScrollViewProxy) {
-        // 詳細 or 編集を表示している間は一覧のキー操作は無効
-        if showingDetail || showingEdit {
-            return
-        }
-
+        if showingDetail || showingEdit { return }
         guard !items.isEmpty else { return }
 
         let current = selectedIndex ?? 0
@@ -166,15 +146,12 @@ struct ContentView: View {
         switch event.keyCode {
         case 126: // ↑
             newIndex = max(current - 1, 0)
-
         case 125: // ↓
             newIndex = min(current + 1, items.count - 1)
-
         case 36, 76: // Enter / Return
             selectedIndex = current
             openDetail()
             return
-
         default:
             return
         }
@@ -209,15 +186,13 @@ struct ContentView: View {
         FileScanService.pickFolder { url in
             guard let url = url else { return }
 
-            // 実際にフォルダ内の名前一覧を取得
             let names = FileScanService.loadFolderNames(from: url)
 
-            // NameNormalizer は String -> String を返す想定
             let normalizedItems: [RenameItem] = names.map { name in
                 let normalized = NameNormalizer.normalize(name)
                 return RenameItem(
-                    original: name,          // ← 旧（元のファイル名）
-                    normalized: normalized,  // ← 新（正規化済み）
+                    original: name,
+                    normalized: normalized,
                     flagged: false
                 )
             }
@@ -228,4 +203,58 @@ struct ContentView: View {
             }
         }
     }
+
+    // MARK: - JSON 書き出し
+
+    private func exportJSON() {
+        #if os(macOS)
+        let panel = NSSavePanel()
+        panel.title = "JSONを書き出す"
+        panel.nameFieldStringValue = "FolderOrganizer.json"
+        panel.allowedContentTypes = [.json]
+
+        if panel.runModal() == .OK, let url = panel.url {
+            let rows = items.map { item in
+                RenameExportRow(
+                    original: item.original,
+                    renamed: item.normalized,
+                    flagged: item.flagged
+                )
+            }
+
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+
+            do {
+                let data = try encoder.encode(rows)
+                try data.write(to: url)
+                print("JSON exported to:", url.path)
+            } catch {
+                print("JSON export error:", error)
+            }
+        }
+        #endif
+    }
+
+    // MARK: - 編集用ヘルパー
+
+    /// 「初回だけ旧／2回目以降は新」の判定
+    private func initialEditText(for item: RenameItem) -> String {
+        let autoNormalized = NameNormalizer.normalize(item.original)
+
+        if item.normalized == autoNormalized {
+            // まだ自動正規化のまま → 旧から編集開始
+            return item.original
+        } else {
+            // すでに一度以上編集済み → 直近の新から編集
+            return item.normalized
+        }
+    }
+}
+
+// JSON出力用
+struct RenameExportRow: Codable {
+    let original: String
+    let renamed: String
+    let flagged: Bool
 }
