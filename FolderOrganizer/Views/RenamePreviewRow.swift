@@ -40,7 +40,8 @@ struct RenamePreviewRow: View {
                 Text("新:")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(AppTheme.colors.newText)
-                Text(item.normalized)
+
+                DiffBuilder.highlightSpaces(in: item.normalized)
                     .font(.system(size: 13))
                     .foregroundColor(AppTheme.colors.newText)
             }

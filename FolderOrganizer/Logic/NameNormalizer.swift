@@ -1,114 +1,214 @@
-// Logic/NameNormalizer.swift
+//
+//  NameNormalizer.swift
+//
+
 import Foundation
 
-/// フォルダ名を正規化するための処理群
 struct NameNormalizer {
 
-    /// Public API — これを呼べばすべての処理がかかる
+    // MARK: - Public API
     static func normalize(_ name: String) -> String {
-        var result = name
+        var s = name
 
-        // 1. カテゴリ（[DLsite] 等）を先に除去
-        result = removeCategoryPrefix(result)
+        // 1) スペース、数字、英字を半角に
+        s = normalizeASCIIWidth(s)
 
-        // 2. [サークル名 (作者名)] → [作者名]
-        result = fixAuthorBracket(in: result)
+        // 2) カタカナは全角に統一
+        s = normalizeKatakana(s)
 
-        // 3. タグ削除（[全年齢], [DL版] など）
-        result = removeTags(in: result)
+        // 3) 丸数字 → 01〜09
+        s = normalizeCircledNumbers(s)
 
-        // 4. サブタイトル整形（" - " → " – " 等）
-        result = fixSubtitle(in: result)
+        // 4) "〜" の統一（~ ～ ∼ → 〜）
+        s = normalizeTildeVariants(s)
 
-        // 5. 余分な空白を整える
-        result = cleanSpaces(result)
+        // 5) "〜" 前後スペース調整
+        s = normalizeTildeSpacing(s)
 
+        // 6) ハイフン区切りのサブタイトル整理
+        s = normalizeHyphenSubtitle(s)
+
+        // 7) 不要タグ削除（[雑誌] は残す）
+        s = removeTags(s)
+
+        // 8) スペース整理（連続スペース、前後トリム）
+        s = cleanSpaces(s)
+
+        return s
+    }
+
+    // MARK: -------------------------------------------------------------
+    // 1. ASCII 幅統一（スペース / 数字 / 英字）
+    // -------------------------------------------------------------
+
+    private static func normalizeASCIIWidth(_ s: String) -> String {
+        s.applyingTransform(.fullwidthToHalfwidth, reverse: false) ?? s
+    }
+
+    // MARK: -------------------------------------------------------------
+    // 2. カタカナは全角に統一
+    // -------------------------------------------------------------
+
+    private static func normalizeKatakana(_ s: String) -> String {
+        s.applyingTransform(.hiraganaToKatakana, reverse: false) ?? s
+    }
+
+    // MARK: -------------------------------------------------------------
+    // 3. 丸数字 → 01〜09
+    // -------------------------------------------------------------
+
+    private static func normalizeCircledNumbers(_ s: String) -> String {
+        var result = s
+        let map: [Character: String] = [
+            "①": "01","②": "02","③": "03","④": "04","⑤": "05",
+            "⑥": "06","⑦": "07","⑧": "08","⑨": "09"
+        ]
+        for (key, rep) in map {
+            result = result.replacingOccurrences(of: String(key), with: rep)
+        }
         return result
     }
 
-    // MARK: - 1. カテゴリ削除（先頭の [XXXX] を落とす）
-    private static func removeCategoryPrefix(_ name: String) -> String {
-        // 例: "[DLsite] [たつわの里 (タツワイプ)] 作品名" → "[たつわの里 (タツワイプ)] 作品名"
-        let pattern = #"^\[[^\]]+\]\s*"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return name }
+    // MARK: -------------------------------------------------------------
+    // 4. "~" などを "〜" に統一
+    // -------------------------------------------------------------
 
-        let range = NSRange(name.startIndex..<name.endIndex, in: name)
-        return regex.stringByReplacingMatches(in: name, range: range, withTemplate: "")
+    private static func normalizeTildeVariants(_ s: String) -> String {
+        var result = s
+        for v in ["~", "～", "∼"] {
+            result = result.replacingOccurrences(of: v, with: "〜")
+        }
+        return result
     }
 
-    // MARK: - 2. [サークル名 (作者名)] → [作者名]
-    ///
-    /// 例:
-    ///   "[たつわの里 (タツワイプ)] テリル崩壊..." → "[タツワイプ] テリル崩壊..."
-    private static func fixAuthorBracket(in name: String) -> String {
-        let pattern = #"\[([^()\[\]]+)\s*\(([^()\[\]]+)\)\]"#
+    // MARK: -------------------------------------------------------------
+    // 5. "〜" の前後スペースのルール適用
+    // -------------------------------------------------------------
 
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return name }
+    private static func normalizeTildeSpacing(_ s: String) -> String {
+        var text = s
+        let tilde: Character = "〜"
+        let indexes = text.indices.filter { text[$0] == tilde }
 
-        let nsRange = NSRange(name.startIndex..<name.endIndex, in: name)
+        guard !indexes.isEmpty else { return text }
 
-        guard let match = regex.firstMatch(in: name, range: nsRange),
-              match.numberOfRanges == 3
-        else {
-            return name
-        }
+        // 1個だけ
+        if indexes.count == 1 {
+            let idx = indexes[0]
+            var start = idx
 
-        // 作者名（第2キャプチャ）
-        let authorRangeNS = match.range(at: 2)
-        guard let authorRange = Range(authorRangeNS, in: name) else { return name }
-        let author = String(name[authorRange])
+            while start > text.startIndex,
+                  text[text.index(before: start)] == " " {
+                start = text.index(before: start)
+            }
 
-        // マッチ全体
-        let fullRangeNS = match.range(at: 0)
-        guard let fullRange = Range(fullRangeNS, in: name) else { return name }
-
-        // マッチの後ろ（作品タイトルなど）
-        let afterStart = fullRange.upperBound
-        let after = afterStart < name.endIndex ? String(name[afterStart...]) : ""
-
-        if after.isEmpty {
-            return "[\(author)]"
+            text.removeSubrange(start..<idx)
+            text.insert(" ", at: start)
         } else {
-            // 例: "[タツワイプ] テリル崩壊..."
-            return "[\(author)] \(after)"
-        }
-    }
+            // 2個以上
+            let first = indexes.first!
+            var start = first
+            while start > text.startIndex,
+                  text[text.index(before: start)] == " " {
+                start = text.index(before: start)
+            }
+            text.removeSubrange(start..<first)
+            text.insert(" ", at: start)
 
-    // MARK: - 3. タグ削除（[全年齢], [DL版], [日本語版] など汎用）
-    private static func removeTags(in name: String) -> String {
-        let pattern = #"\[[^\]]*\]"#
+            // 文字列が変わったので最後の位置を再取得
+            let newIndexes = text.indices.filter { text[$0] == tilde }
+            let last = newIndexes.last!
 
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return name }
+            // 後ろのスペース削除
+            var after = text.index(after: last)
+            while after < text.endIndex, text[after] == " " {
+                text.remove(at: after)
+            }
 
-        let nsRange = NSRange(name.startIndex..<name.endIndex, in: name)
-        let cleaned = regex.stringByReplacingMatches(in: name, range: nsRange, withTemplate: "")
-
-        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    // MARK: - 4. サブタイトル整形
-    private static func fixSubtitle(in name: String) -> String {
-        // 例: "タイトル - サブタイトル" → "タイトル – サブタイトル"
-        var s = name
-        s = s.replacingOccurrences(of: " - ", with: " – ")
-        return s
-    }
-
-    // MARK: - 5. スペース整形
-    private static func cleanSpaces(_ name: String) -> String {
-        var s = name
-
-        // 全角スペース → 半角
-        s = s.replacingOccurrences(of: "　", with: " ")
-
-        // 多重スペースの整理
-        while s.contains("  ") {
-            s = s.replacingOccurrences(of: "  ", with: " ")
+            // 行末でなければスペースを挿入
+            if last < text.index(before: text.endIndex) {
+                text.insert(" ", at: text.index(after: last))
+            }
         }
 
-        // 前後空白を削除
-        s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 末尾スペースは削除
+        while text.last == " " {
+            text.removeLast()
+        }
 
-        return s
+        return text
+    }
+
+    // MARK: -------------------------------------------------------------
+    // 6. ハイフン区切りサブタイトルの整形
+    // 「タイトル - サブタイトル」→「タイトル – サブタイトル」
+    // -------------------------------------------------------------
+
+    private static func normalizeHyphenSubtitle(_ s: String) -> String {
+        var text = s
+
+        // 正規表現で "タイトル - サブタイトル" を抽出
+        let pattern = #"(.+?)\s*[-‐—―]\s*(.+)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return text
+        }
+
+        let nsText = text as NSString
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+
+        guard let first = matches.first, first.numberOfRanges >= 3 else {
+            return text
+        }
+
+        let title = nsText.substring(with: first.range(at: 1))
+        let subtitle = nsText.substring(with: first.range(at: 2))
+
+        // TextClassifier を使って "サブタイトルっぽい" なら置換
+        if TextClassifier.isSubtitle(subtitle) {
+            text = "\(title) – \(subtitle)"
+        }
+
+        return text
+    }
+
+    // MARK: -------------------------------------------------------------
+    // 7. 不要タグ削除（[雑誌] は保護）
+    // -------------------------------------------------------------
+
+    private static func removeTags(_ name: String) -> String {
+        var text = name
+
+        let removable = [
+            "(DL版)", "(オリジナル)", "DL版", "オリジナル",
+            "[AI生成]", "(AI生成)"
+        ]
+
+        for tag in removable {
+            text = text.replacingOccurrences(of: tag, with: "")
+        }
+
+        // [雑誌] 以外の [] タグを取り除く
+        let bracketPattern = #"\[(?!雑誌)([^\]]+)\]"#
+        if let regex = try? NSRegularExpression(pattern: bracketPattern) {
+            text = regex.stringByReplacingMatches(
+                in: text,
+                range: NSRange(location: 0, length: (text as NSString).length),
+                withTemplate: ""
+            )
+        }
+
+        return text
+    }
+
+    // MARK: -------------------------------------------------------------
+    // 8. スペース整形（前後 / 連続スペース）
+    // -------------------------------------------------------------
+
+    private static func cleanSpaces(_ s: String) -> String {
+        var text = s
+        while text.contains("  ") {
+            text = text.replacingOccurrences(of: "  ", with: " ")
+        }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
