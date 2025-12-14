@@ -8,7 +8,7 @@ struct RenameEditView: View {
 
     /// 編集中の文字列（リアルタイム反映）
     @Binding var edited: String
-
+    
     /// 反映（Enter / 反映ボタン）
     let onCommit: () -> Void
 
