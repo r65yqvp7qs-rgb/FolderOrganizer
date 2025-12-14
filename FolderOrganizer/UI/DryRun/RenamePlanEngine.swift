@@ -13,31 +13,31 @@ final class RenamePlanEngine {
         // MARK: - Original
         let originalName = url.lastPathComponent
 
-        // MARK: - Normalize（まずは String をそのまま使う）
-        let normalized = NameNormalizer.normalize(originalName)
+        // MARK: - Normalize（Result型）
+        let normalizationResult = NameNormalizer.normalize(originalName)
+        let normalizedName = normalizationResult.displayName
 
-        // MARK: - Detect（最小構成）
-        let detectedAuthor: String? = nil
-        let title = normalized
-        let subtitle: String? = nil
-        let maybeSubtitle: String? = nil
+        // MARK: - Detect（最小構成：後で役割検出に差し替え）
+        let detectedAuthor: String? = normalizationResult.author
+        let title: String = normalizationResult.title
+        let subtitle: String? = normalizationResult.subtitle
+        let maybeSubtitle: String? = normalizationResult.maybeSubtitle
 
         // MARK: - Target
         let targetParentFolder = url.deletingLastPathComponent()
 
-        // ★ 確認用パッチ（After が必ず変わる）
-        let targetName = DebugNormalizationPatch.applyToTargetName(normalized)
+        // 確認用パッチ（String を渡す）
+        let targetName = DebugNormalizationPatch
+            .applyToTargetName(normalizedName)
 
         // MARK: - Warnings
-        var warnings: [RenameWarning] = []
-        if detectedAuthor == nil {
-            warnings.append(.authorNotDetected)
-        }
+        var warnings: [RenameWarning] = normalizationResult.warnings
 
+        // MARK: - Build Plan
         return RenamePlan(
             originalURL: url,
             originalName: originalName,
-            normalizedName: normalized,
+            normalizedName: normalizedName,
             detectedAuthor: detectedAuthor,
             title: title,
             subtitle: subtitle,

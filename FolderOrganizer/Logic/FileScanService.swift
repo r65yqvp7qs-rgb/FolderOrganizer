@@ -35,11 +35,12 @@ struct FileScanService {
         ]
 
         return samples.map { name in
-            let normalized = NameNormalizer.normalize(name)
+            let result = NameNormalizer.normalize(name)
+
             return RenameItem(
                 original: name,
-                normalized: normalized,
-                flagged: false
+                normalized: result.displayName,
+                flagged: result.hasBlockingWarning
             )
         }
     }
@@ -99,11 +100,12 @@ struct FileScanService {
         let names = loadFolderNames(from: rootURL)
 
         let rows: [NormalizedExportRow] = names.map { name in
-            let normalized = NameNormalizer.normalize(name)
+            let result = NameNormalizer.normalize(name)
+
             return NormalizedExportRow(
                 original: name,
-                renamed: normalized,
-                flagged: false   // 検証用なので常に false
+                renamed: result.displayName,
+                flagged: result.hasBlockingWarning
             )
         }
 

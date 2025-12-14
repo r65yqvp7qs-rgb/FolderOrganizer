@@ -11,9 +11,9 @@ enum RenameWarning: Identifiable {
         case .authorNotDetected:
             return "authorNotDetected"
         case .ambiguousSubtitle(let value):
-            return "ambiguousSubtitle-\(value)"
+            return "ambiguousSubtitle:\(value)"
         case .duplicateNameExists(let name):
-            return "duplicateNameExists-\(name)"
+            return "duplicateNameExists:\(name)"
         }
     }
 
@@ -22,9 +22,20 @@ enum RenameWarning: Identifiable {
         case .authorNotDetected:
             return "作者名を検出できませんでした"
         case .ambiguousSubtitle(let value):
-            return "subtitle か不明な要素があります: \(value)"
+            return "副題かもしれない文字列があります: \(value)"
         case .duplicateNameExists(let name):
-            return "同名フォルダが既に存在する可能性があります: \(name)"
+            return "同名フォルダが既に存在します: \(name)"
+        }
+    }
+
+    var isBlocking: Bool {
+        switch self {
+        case .authorNotDetected:
+            return true
+        case .ambiguousSubtitle:
+            return false
+        case .duplicateNameExists:
+            return true
         }
     }
 }
