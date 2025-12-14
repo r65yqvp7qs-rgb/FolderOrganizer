@@ -8,61 +8,67 @@ struct RenamePreviewRow: View {
     @Binding var flagged: Bool
     let isSelected: Bool
 
+    private var isOdd: Bool { index % 2 == 1 }
+
     var body: some View {
+        HStack(spacing: 10) {
 
-        /// 背景色ロジック
-        let background: Color = {
-            if item.isSubtitle {
-                return AppTheme.colors.subtitleBackground
-            } else if item.isPotentialSubtitle {
-                return AppTheme.colors.potentialSubtitleBackground
-            } else {
-                return index.isMultiple(of: 2)
-                    ? AppTheme.colors.rowAltBackground
-                    : AppTheme.colors.cardBackground
-            }
-        }()
+            Toggle("", isOn: $flagged)
+                .toggleStyle(.checkbox)
+                .labelsHidden()
 
-        VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
 
-            // 旧
-            HStack(alignment: .firstTextBaseline) {
-                Text("旧:")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppTheme.colors.oldText)
-                Text(item.original)
-                    .font(.system(size: 13))
-                    .foregroundColor(.primary)
+                attributedText(item.original, color: AppTheme.colors.oldText)
+
+                attributedText(item.normalized, color: AppTheme.colors.newText)
             }
 
-            // 新
-            HStack(alignment: .firstTextBaseline) {
-                Text("新:")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppTheme.colors.newText)
-
-                DiffBuilder.highlightSpaces(in: item.normalized)
-                    .font(.system(size: 13))
-                    .foregroundColor(AppTheme.colors.newText)
-            }
-
-            Toggle(isOn: $flagged) {
-                Text("おかしい？")
-                    .font(.system(size: 11))
-                    .foregroundColor(AppTheme.colors.checkLabel)
-            }
-            .toggleStyle(.checkbox)
+            Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)   // ← ★これ！
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(background)
-        )
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(backgroundColor)
+        .cornerRadius(8)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 8)
                 .stroke(isSelected ? AppTheme.colors.selectedBorder : .clear, lineWidth: 2)
         )
+    }
+
+    private var backgroundColor: Color {
+        if item.isSubtitle {
+            return AppTheme.colors.subtitleBackground
+        }
+        if item.isPotentialSubtitle {
+            return AppTheme.colors.potentialSubtitleBackground
+        }
+        return isOdd ? AppTheme.colors.rowAltBackground : AppTheme.colors.cardBackground
+    }
+
+    @ViewBuilder
+    private func attributedText(_ text: String, color: Color) -> some View {
+        Text(makeAttributedString(text))
+            .font(.system(.body, design: .monospaced))
+            .foregroundColor(color)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func makeAttributedString(_ text: String) -> AttributedString {
+        var result = AttributedString()
+        for ch in text {
+            if ch == " " {
+                var a = AttributedString("␣")
+                a.foregroundColor = AppTheme.colors.spaceMarkerHalf
+                result.append(a)
+            } else if ch == "　" {
+                var a = AttributedString("▢")
+                a.foregroundColor = AppTheme.colors.spaceMarkerFull
+                result.append(a)
+            } else {
+                result.append(AttributedString(String(ch)))
+            }
+        }
+        return result
     }
 }

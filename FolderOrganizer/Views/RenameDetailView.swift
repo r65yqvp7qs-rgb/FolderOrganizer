@@ -1,4 +1,4 @@
-//  Views/RenameDetailView.swift
+// Views/RenameDetailView.swift
 import SwiftUI
 
 struct RenameDetailView: View {
@@ -10,10 +10,116 @@ struct RenameDetailView: View {
     let onPrev: () -> Void
     let onNext: () -> Void
     let onClose: () -> Void
-    let onEdit: () -> Void   // Enter で編集へ
+    let onEdit: () -> Void
 
-    // 一覧と同期した背景色
-    private var detailBackgroundColor: Color {
+    @FocusState private var focused: Bool
+
+    /// 右端ボタンレーンの幅
+    private let sideButtonWidth: CGFloat = 48
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+
+            // ─────────────────────────
+            // メインコンテンツ
+            // ─────────────────────────
+            VStack(spacing: 0) {
+
+                // Header（編集のみ）
+                HStack {
+                    Button(action: onEdit) {
+                        Label("編集", systemImage: "pencil")
+                            .font(.headline)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+
+                // 本文（中央寄せ）
+                VStack(alignment: .leading, spacing: 22) {
+
+                    GroupBox("元の名前") {
+                        spaceMarkedText(item.original, isNew: false)
+                            .frame(minHeight: lineHeight * 2, alignment: .topLeading)
+                    }
+
+                    GroupBox("正規化後（新しい名前）") {
+                        spaceMarkedText(item.normalized, isNew: true)
+                            .frame(minHeight: lineHeight * 2, alignment: .topLeading)
+                    }
+
+                    // 現在位置（正規化後の直下・中央）
+                    Text("\(index + 1) / \(total)")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 6)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 48)
+                .padding(.trailing, sideButtonWidth + 16) // ← 右側を確実に空ける
+                .padding(.bottom, 24)
+
+                Spacer(minLength: 0)
+            }
+
+            // ─────────────────────────
+            // 右端 縦ボタンレーン
+            // ─────────────────────────
+            VStack(spacing: 18) {
+
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .resizable()
+                        .frame(width: 26, height: 26)
+                }
+
+                Button(action: onPrev) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .resizable()
+                        .frame(width: 26, height: 26)
+                }
+
+                Button(action: onNext) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .resizable()
+                        .frame(width: 26, height: 26)
+                }
+
+                Spacer()
+            }
+            .padding(.top, 14)
+            .padding(.trailing, 14)
+        }
+        .frame(minWidth: 760, minHeight: 460)
+        .background(detailBackground)
+
+        // Keyboard
+        .focusable(true)
+        .focused($focused)
+        .onAppear { focused = true }
+
+        .onMoveCommand { dir in
+            if dir == .up { onPrev() }
+            if dir == .down { onNext() }
+        }
+        .onKeyPress(.return) {
+            onEdit()
+            return .handled
+        }
+        .onKeyPress(.escape) {
+            onClose()
+            return .handled
+        }
+    }
+
+    private let lineHeight: CGFloat = 26
+
+    private var detailBackground: Color {
         if TextClassifier.isSubtitle(item.normalized) {
             return AppTheme.colors.subtitleBackground
         }
@@ -23,111 +129,29 @@ struct RenameDetailView: View {
         return AppTheme.colors.cardBackground
     }
 
-    var body: some View {
-        ZStack {
-            // うっすら暗く（後ろの一覧）が見えるオーバーレイ
-            Color.black.opacity(0.15)
-                .ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onClose()          // 枠外クリックで閉じる
-                }
+    private func spaceMarkedText(_ text: String, isNew: Bool) -> some View {
+        Text(makeAttributedString(text))
+            .font(.system(size: 18, design: .monospaced))
+            .foregroundColor(isNew ? AppTheme.colors.newText : AppTheme.colors.oldText)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .textSelection(.enabled)
+    }
 
-            VStack(alignment: .leading, spacing: 20) {
-
-                // 上部：閉じるボタン
-                HStack {
-                    Spacer()
-                    Button(action: onClose) {
-                        Image(systemName: "xmark.circle.fill")
-                            .resizable()
-                            .frame(width: 26, height: 26)
-                            .foregroundColor(.gray)
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                // 旧
-                HStack(alignment: .top, spacing: 6) {
-                    Text("旧:")
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundColor(AppTheme.colors.oldText)
-
-                    Text(item.original)
-                        .font(.system(size: 19))
-                        .foregroundColor(AppTheme.colors.oldText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                // 新（自動） ここでスペースを可視化
-                HStack(alignment: .top, spacing: 6) {
-                    Text("新:")
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundColor(AppTheme.colors.newText)
-
-                    DiffBuilder.highlightSpaces(in: item.normalized)
-                        .font(.system(size: 19))
-                        .foregroundColor(AppTheme.colors.newText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                // 操作ガイド
-                Text("Enter で編集 / ↑↓ で移動 / Esc で閉じる")
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
-
-                Spacer()
-
-                // 右下：前へ / 現在位置 / 次へ
-                HStack {
-                    Spacer()
-                    VStack(spacing: 10) {
-
-                        Button(action: onPrev) {
-                            Image(systemName: "chevron.up.circle.fill")
-                                .resizable()
-                                .frame(width: 34, height: 34)
-                                .foregroundColor(Color.accentColor)
-                        }
-                        .disabled(index == 0)
-
-                        Text("\(index + 1) / \(total)")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.black)
-
-                        Button(action: onNext) {
-                            Image(systemName: "chevron.down.circle.fill")
-                                .resizable()
-                                .frame(width: 34, height: 34)
-                                .foregroundColor(Color.accentColor)
-                        }
-                        .disabled(index >= total - 1)
-                    }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 8)
-                }
-            }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 20)
-            .frame(width: 720, height: 420)
-            .background(detailBackgroundColor)
-            .cornerRadius(18)
-            .shadow(radius: 8)
-        }
-        // キーボード操作
-        .onKeyDown { event in
-            switch event.keyCode {
-            case 126: // ↑
-                onPrev()
-            case 125: // ↓
-                onNext()
-            case 36, 76: // Enter → 編集モードへ
-                onEdit()
-            case 53:  // Esc
-                onClose()
-            default:
-                break
+    private func makeAttributedString(_ text: String) -> AttributedString {
+        var result = AttributedString()
+        for ch in text {
+            if ch == " " {
+                var a = AttributedString("␣")
+                a.foregroundColor = AppTheme.colors.spaceMarkerHalf
+                result.append(a)
+            } else if ch == "　" {
+                var a = AttributedString("▢")
+                a.foregroundColor = AppTheme.colors.spaceMarkerFull
+                result.append(a)
+            } else {
+                result.append(AttributedString(String(ch)))
             }
         }
+        return result
     }
 }

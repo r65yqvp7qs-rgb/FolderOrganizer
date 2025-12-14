@@ -76,22 +76,28 @@ struct ContentView: View {
         }
 
         // ==== 編集ポップアップ ====
+        // ContentView.swift（編集シート部分）
         .sheet(isPresented: $showingEdit) {
-            RenameEditView(
-                editText: $editText,
-                onCommit: { newText in
-                    if let idx = selectedIndex,
-                       items.indices.contains(idx) {
-                        items[idx].normalized = newText
+
+            if let idx = selectedIndex,
+               items.indices.contains(idx) {
+
+                let item = items[idx]
+
+                RenameEditView(
+                    original: item.original,
+                    edited: $editText,
+                    onCommit: {
+                        items[idx].normalized = editText
+                        showingEdit = false
+                        showingDetail = true   // 編集後は詳細に戻る
+                    },
+                    onCancel: {
+                        showingEdit = false
+                        showingDetail = true   // キャンセルでも詳細に戻る
                     }
-                    showingEdit = false
-                    showingDetail = true      // 編集後は同じ項目の詳細に戻る
-                },
-                onCancel: {
-                    showingEdit = false
-                    showingDetail = true      // キャンセルでも元の詳細に戻る
-                }
-            )
+                )
+            }
         }
     }
 
