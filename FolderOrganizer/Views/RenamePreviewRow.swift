@@ -10,7 +10,6 @@ struct RenamePreviewRow: View {
     let isModified: Bool
     @Binding var flagged: Bool
 
-    /// 背景色（仮）
     private var backgroundColor: Color {
         if isSelected {
             return AppTheme.colors.subtitleBackground
@@ -29,14 +28,16 @@ struct RenamePreviewRow: View {
                 .foregroundColor(AppTheme.colors.oldText)
                 .frame(width: 260, alignment: .leading)
 
-            // 新名（提案 or 編集後）
+            // 新名（差分ハイライト）
             VStack(alignment: .leading, spacing: 6) {
 
-                DiffBuilder.highlightSpaces(in: displayName)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(AppTheme.colors.newText)
+                DiffBuilder.highlightDiff(
+                    old: original,
+                    new: displayName
+                )
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(AppTheme.colors.newText)
 
-                // 編集済みバッジ
                 if isModified {
                     Text("編集済み")
                         .font(.system(size: 10, weight: .semibold))
@@ -48,7 +49,6 @@ struct RenamePreviewRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // フラグ
             Toggle("", isOn: $flagged)
                 .labelsHidden()
         }

@@ -12,7 +12,8 @@ final class RenamePlanEngine {
     /// 既存コードがこのシグネチャで呼んでいる前提
     func generatePlan(
         for url: URL,
-        userDecision: UserSubtitleDecision
+        subtitleDecision: UserSubtitleDecision,
+        authorDecision: UserAuthorDecision
     ) -> RenamePlan {
 
         // MARK: - Original
