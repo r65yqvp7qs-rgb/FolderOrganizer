@@ -1,48 +1,67 @@
+//
+//  UI/ApplyConfirmationRowView.swift
+//  FolderOrganizer
+//
+
 import SwiftUI
 
 struct ApplyConfirmationRowView: View {
-
     let plan: RenamePlan
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
 
-            Text(plan.originalName)
-                .font(.body)
-
-            Text("→ \(plan.targetParentFolder.lastPathComponent) / \(plan.targetName)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
+            // warnings が空なら何も出さない（好みで表示してもOK）
             if !plan.warnings.isEmpty {
-                ForEach(plan.warnings) { warning in
-                    Label(
-                        warning.message,
-                        systemImage: warningIcon(for: warning)
-                    )
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(plan.warnings, id: \.self) { warning in
+                        Label {
+                            Text(warning.message)
+                        } icon: {
+                            Image(systemName: warningIcon(for: warning))
+                        }
+                        .foregroundStyle(warningColor(for: warning))
+                    }
                 }
+                .padding(.vertical, 6)
             }
         }
-        .padding(.vertical, 6)
     }
+}
 
-    private func warningIcon(for warning: RenameWarning) -> String {
+// MARK: - UI Mapping（ここでUI表現を決める）
+
+private extension ApplyConfirmationRowView {
+
+    func warningIcon(for warning: RenameWarning) -> String {
         switch warning {
         case .authorNotDetected:
             return "person.crop.circle.badge.questionmark"
+
         case .ambiguousSubtitle:
             return "questionmark.circle"
+
         case .duplicateNameExists:
             return "exclamationmark.triangle"
+
+        case .fullWidthSpaceReplaced:
+            return "arrow.left.and.right"
+
+        case .multipleSpacesCollapsed:
+            return "arrow.triangle.2.circlepath"
         }
     }
 
-    private func warningColor(for warning: RenameWarning) -> Color {
+    func warningColor(for warning: RenameWarning) -> Color {
         switch warning {
-        case .authorNotDetected:
+        case .authorNotDetected, .duplicateNameExists:
             return .red
-        default:
+
+        case .ambiguousSubtitle:
             return .orange
+
+        case .fullWidthSpaceReplaced, .multipleSpacesCollapsed:
+            return .secondary
         }
     }
 }

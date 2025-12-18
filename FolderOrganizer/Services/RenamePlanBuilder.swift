@@ -49,8 +49,8 @@ final class DefaultRenamePlanBuilder: RenamePlanBuilder {
         }
 
         // サブタイトル曖昧
-        if roles.maybeSubtitle != nil {
-            warnings.append(.ambiguousSubtitle)
+        if let maybe = roles.maybeSubtitle {
+            warnings.append(.ambiguousSubtitle(maybe))
         }
 
         // 同名存在（DryRun では仮判定）

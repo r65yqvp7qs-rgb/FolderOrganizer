@@ -1,25 +1,49 @@
-// Domain/RenameWarning.swift
+//
+//  Domain/RenameWarning.swift
+//  FolderOrganizer
+//
+//  Domain層の警告モデル（UIに依存しない）
+//
+
 import Foundation
 
-/// リネーム処理中に発生する警告・ブロック要因
-///
-/// UI / Summary / Export すべてがこの enum を参照する
-/// case を減らすと壊れるので「増やすのみ」が原則
-enum RenameWarning: Identifiable {
+/// リネーム計画で発生した「警告」
+/// - NOTE: Domain層なので SwiftUI(Color) など UI 型は使わない
+enum RenameWarning: Hashable {
+    /// 作者が検出できなかった
     case authorNotDetected
-    case ambiguousSubtitle
+
+    /// Subtitle が曖昧（候補文字列を保持）
+    case ambiguousSubtitle(String)
+
+    /// 同名が存在する（DryRun時点の仮判定を含む）
     case duplicateNameExists
 
-    var id: String { message }
+    /// 全角スペースを半角スペースに置換した
+    case fullWidthSpaceReplaced
 
+    /// 連続スペースを1つに畳んだ
+    case multipleSpacesCollapsed
+}
+
+extension RenameWarning {
+    /// UI表示用メッセージ（文言はここに集約してOK：ただしUI型は入れない）
     var message: String {
         switch self {
         case .authorNotDetected:
-            return "作者が検出できません"
-        case .ambiguousSubtitle:
-            return "サブタイトルの判定が曖昧です"
+            return "作者が検出できませんでした"
+
+        case .ambiguousSubtitle(let candidate):
+            return "Subtitle が曖昧です（候補: \(candidate)）"
+
         case .duplicateNameExists:
-            return "同名フォルダが既に存在します"
+            return "同名が存在する可能性があります"
+
+        case .fullWidthSpaceReplaced:
+            return "全角スペースを半角スペースに置換しました"
+
+        case .multipleSpacesCollapsed:
+            return "連続スペースを1つに畳みました"
         }
     }
 }
