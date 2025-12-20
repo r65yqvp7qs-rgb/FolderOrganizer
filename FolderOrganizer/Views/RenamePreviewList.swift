@@ -5,33 +5,27 @@ struct RenamePreviewList: View {
     @Binding var items: [RenameItem]
     @Binding var selectedIndex: Int?
 
+    let showSpaceMarkers: Bool
+    let onSelect: (Int) -> Void
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 6) {
-                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                        RenamePreviewRowView(
-                            item: item,
-                            index: index,
-                            isSelected: selectedIndex == index,
-                            flagged: $items[index].flagged,
-                            onSelect: {
-                                selectedIndex = index
-                                NotificationCenter.default.post(name: .openDetailFromList, object: index)
-                            }
-                        )
-                        .id(item.id)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                PreviewListContent(
+                    items: $items,
+                    selectedIndex: $selectedIndex,
+                    showSpaceMarkers: showSpaceMarkers,
+                    onSelect: onSelect
+                )
             }
-            .onChange(of: selectedIndex) { _, newIndex in
-                guard let idx = newIndex, items.indices.contains(idx) else { return }
+            .onChange(of: selectedIndex) { _, newValue in
+                guard let idx = newValue, items.indices.contains(idx) else { return }
                 withAnimation {
                     proxy.scrollTo(items[idx].id, anchor: .center)
                 }
             }
         }
+        .background(Color.white.opacity(0.03))
+        .cornerRadius(10)
     }
 }

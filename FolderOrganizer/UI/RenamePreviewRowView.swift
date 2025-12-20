@@ -6,7 +6,9 @@ struct RenamePreviewRowView: View {
     let index: Int
     let isSelected: Bool
 
+    let showSpaceMarkers: Bool
     @Binding var flagged: Bool
+
     let onSelect: () -> Void
 
     var body: some View {
@@ -16,13 +18,17 @@ struct RenamePreviewRowView: View {
                     .font(.system(size: 12))
                     .opacity(0.75)
 
-                Text(SpaceMarkerText.make(item.displayNameForList))
-                .font(.system(size: 14, weight: .semibold))
+                if showSpaceMarkers {
+                    Text(SpaceMarkerText.make(item.displayNameForList))
+                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                } else {
+                    Text(item.displayNameForList)
+                        .font(.system(size: 14, weight: .semibold))
+                }
             }
 
             Spacer()
 
-            // 変更マーク（任意）
             if item.isModified {
                 Text("●")
                     .font(.system(size: 12))

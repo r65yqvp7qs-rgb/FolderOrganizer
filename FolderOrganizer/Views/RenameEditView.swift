@@ -6,6 +6,8 @@ struct RenameEditView: View {
     let original: String
     @Binding var edited: String
 
+    let showSpaceMarkers: Bool
+
     let onCommit: () -> Void
     let onCancel: () -> Void
 
@@ -17,34 +19,23 @@ struct RenameEditView: View {
             Text("名前を編集")
                 .font(.headline)
 
-            // ─────────────────────────
-            // リアルタイムプレビュー（色付きスペース）
-            // ─────────────────────────
-            VStack(alignment: .leading, spacing: 6) {
-                Text("プレビュー（編集内容が即時反映）")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            GroupBox("プレビュー（編集内容が即時反映）") {
+                let preview = edited.isEmpty ? original : edited
 
-                Text(
-                    SpaceMarkerText.make(
-                        edited.isEmpty ? original : edited
-                    )
-                )
-                .font(.system(size: 15, design: .monospaced))
+                Group {
+                    if showSpaceMarkers {
+                        Text(SpaceMarkerText.make(preview))
+                            .font(.system(size: 15, design: .monospaced))
+                    } else {
+                        Text(preview)
+                            .font(.system(size: 15))
+                    }
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .textSelection(.enabled)
-                .padding(10)
-                .background(AppTheme.colors.previewBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(AppTheme.colors.previewBorder)
-                )
-                .cornerRadius(6)
+                .padding(8)
             }
 
-            // ─────────────────────────
-            // 編集欄（生テキスト）
-            // ─────────────────────────
             GroupBox("編集") {
                 TextEditor(text: $edited)
                     .font(.system(size: 18, design: .monospaced))
@@ -57,7 +48,9 @@ struct RenameEditView: View {
 
             HStack {
                 Button("キャンセル") { onCancel() }
+
                 Spacer()
+
                 Button("反映") { onCommit() }
                     .buttonStyle(.borderedProminent)
             }
