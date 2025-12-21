@@ -31,21 +31,14 @@ struct RenameDetailView: View {
                 .font(.system(size: 12))
                 .opacity(0.8)
 
-            if showSpaceMarkers {
-                SpaceMarkerTextView(
-                    original,
-                    showSpaceMarkers: true
-                )
-                .font(.system(size: 12, design: .monospaced))
-                .opacity(0.85)
-            } else {
-                SpaceMarkerTextView(
-                    original,
-                    showSpaceMarkers: showSpaceMarkers,
-                    font: .system(size: 12)
-                )
-                .opacity(0.85)
-            }
+            SpaceMarkerTextView(
+                original,
+                showSpaceMarkers: showSpaceMarkers,
+                font: showSpaceMarkers
+                    ? .system(size: 12, design: .monospaced)
+                    : .system(size: 12)
+            )
+            .opacity(0.85)
 
             // 編集
             Text("編集:")
@@ -73,8 +66,11 @@ struct RenameDetailView: View {
                 )
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
             } else {
-                Text(preview)
-                    .font(.system(size: 13, weight: .semibold))
+                SpaceMarkerTextView(
+                    preview,
+                    showSpaceMarkers: showSpaceMarkers,
+                    font: .system(size: 13, weight: .semibold)
+                )
             }
 
             Spacer()
