@@ -11,15 +11,15 @@ struct RenamePlanRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
 
-            // 差分を生成
-            let segments = DiffBuilder.build(
+            // 差分生成
+            let tokens = DiffBuilder.build(
                 old: plan.originalName,
                 new: plan.targetName
             )
 
-            // 差分表示
+            // 差分表示（← ここが修正点）
             DiffTextView(
-                segments: segments,
+                tokens: tokens,
                 font: .system(size: 14, weight: .semibold, design: .monospaced)
             )
 

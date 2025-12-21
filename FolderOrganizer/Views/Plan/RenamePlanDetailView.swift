@@ -18,15 +18,15 @@ struct RenamePlanDetailView: View {
                         .font(.system(size: 13, design: .monospaced))
                 }
 
+                // ✅ 差分は ViewBuilder の外で生成
+                let tokens = DiffBuilder.build(
+                    old: plan.originalName,
+                    new: plan.targetName
+                )
+
                 LabeledContent("After") {
-
-                    let segments = DiffBuilder.build(
-                        old: plan.originalName,
-                        new: plan.targetName
-                    )
-
                     DiffTextView(
-                        segments: segments,
+                        tokens: tokens,
                         font: .system(
                             size: 13,
                             weight: .semibold,

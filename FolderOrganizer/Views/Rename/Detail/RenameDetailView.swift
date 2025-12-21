@@ -1,5 +1,6 @@
-// Views/Detail/RenameDetailView.swift
-
+//
+// Views/Rename/RenameDetailView.swift
+//
 import SwiftUI
 
 struct RenameDetailView: View {
@@ -15,73 +16,89 @@ struct RenameDetailView: View {
     let onResetToSuggested: () -> Void
     let onClose: () -> Void
 
+    // 表示用フォント（Rename Detail 用に固定）
+    private let detailFont: Font = .system(
+        size: 13,
+        weight: .semibold,
+        design: .monospaced
+    )
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
 
-            // ヘッダー
+            // MARK: - Header
             HStack {
-                Text("Folder Organizer")
-                    .font(.system(size: 22, weight: .bold))
+                Text("Rename Preview")
+                    .font(.title2)
+                    .bold()
+
                 Spacer()
-                Button("×") { onClose() }
+
+                Button("×") {
+                    onClose()
+                }
             }
 
-            // 旧
-            Text("旧:")
-                .font(.system(size: 12))
-                .opacity(0.8)
+            Divider()
 
-            SpaceMarkerTextView(
-                original,
-                showSpaceMarkers: showSpaceMarkers,
-                font: showSpaceMarkers
-                    ? .system(size: 12, design: .monospaced)
-                    : .system(size: 12)
-            )
-            .opacity(0.85)
+            // MARK: - Original
+            VStack(alignment: .leading, spacing: 4) {
+                Text("旧")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
-            // 編集
-            Text("編集:")
-                .font(.headline)
-
-            Button("提案に戻す") {
-                onResetToSuggested()
-            }
-
-            TextField("新しい名前を編集…", text: $editedText)
-                .textFieldStyle(.roundedBorder)
-                .font(.system(size: 15))
-
-            // 新
-            Text("新:")
-                .font(.system(size: 12))
-                .opacity(0.8)
-
-            let preview = editedText.isEmpty ? suggested : editedText
-
-            if showSpaceMarkers {
                 SpaceMarkerTextView(
-                    preview,
-                    showSpaceMarkers: true
+                    original,
+                    showSpaceMarkers: showSpaceMarkers,
+                    font: .system(size: 12, design: .monospaced)
                 )
-                .font(.system(size: 13, weight: .semibold, design: .monospaced))
-            } else {
-                
-                
-                let diff = DiffBuilder.build(
+                .opacity(0.65)
+            }
+
+            // MARK: - Edit
+            VStack(alignment: .leading, spacing: 8) {
+                Text("編集")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField("新しい名前を編集…", text: $editedText)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 15))
+
+                Button("提案に戻す") {
+                    onResetToSuggested()
+                }
+                .controlSize(.small)
+            }
+
+            // MARK: - New (Diff)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("新（差分）")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // 編集中 or suggested を表示対象にする
+                let preview = editedText.isEmpty ? suggested : editedText
+
+                // Diff 生成
+                let tokens = DiffBuilder.build(
                     old: original,
                     new: preview
                 )
 
+                // Diff 表示
                 DiffTextView(
-                    segments: diff,
-                    font: .system(size: 13, weight: .semibold, design: .monospaced)
+                    tokens: tokens,
+                    font: detailFont
                 )
             }
 
             Spacer()
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(20)
+        .frame(minWidth: 520, minHeight: 420)
+        .background(
+            Color(nsColor: .windowBackgroundColor)
+        )
     }
 }
