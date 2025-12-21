@@ -66,10 +66,16 @@ struct RenameDetailView: View {
                 )
                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
             } else {
-                SpaceMarkerTextView(
-                    preview,
-                    showSpaceMarkers: showSpaceMarkers,
-                    font: .system(size: 13, weight: .semibold)
+                
+                
+                let diff = DiffBuilder.build(
+                    old: original,
+                    new: preview
+                )
+
+                DiffTextView(
+                    segments: diff,
+                    font: .system(size: 13, weight: .semibold, design: .monospaced)
                 )
             }
 

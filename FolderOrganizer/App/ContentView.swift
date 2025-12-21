@@ -12,9 +12,12 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 12) {
 
+            // タイトル
             Text("Folder Organizer")
                 .font(.largeTitle)
                 .bold()
+                // ✅ macOS らしい余白（タイトルバーとの干渉防止）
+                .padding(.top, 12)
 
             Button("フォルダ名を読み込んで変換プレビュー") {
                 loadDummy()
@@ -30,8 +33,19 @@ struct ContentView: View {
                     selectedIndex = index
                 }
             )
+
+            Spacer()
         }
-        .padding()
+        .padding(18)
+
+        // ✅ 背景（ライトモードでも眩しくならない）
+        .background(
+            Color(nsColor: .windowBackgroundColor)
+        )
+
+        // ✅ 上だけ SafeArea を守る（タイトル見切れ防止）
+        .ignoresSafeArea(edges: [.bottom, .leading, .trailing])
+
         .onAppear {
             if items.isEmpty {
                 loadDummy()
@@ -39,6 +53,7 @@ struct ContentView: View {
         }
     }
 
+    // ダミーデータ
     private func loadDummy() {
         items = [
             RenameItem(

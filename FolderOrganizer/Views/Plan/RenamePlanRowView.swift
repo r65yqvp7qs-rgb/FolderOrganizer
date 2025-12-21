@@ -1,38 +1,33 @@
-// Views/RenamePlanRowView.swift
+//
+// Views/Plan/RenamePlanRowView.swift
+//
 import SwiftUI
 
 struct RenamePlanRowView: View {
 
     let plan: RenamePlan
-    @State private var showDiff: Bool = true
+    let showSpaceMarkers: Bool
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
 
-        VStack(alignment: .leading, spacing: 6) {
-
-            Text("Before")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            Text(plan.originalName)
-                .font(.body)
-
-            Text("After")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.top, 4)
-
-            DiffBuilder.highlightDiff(
+            // 差分を生成
+            let segments = DiffBuilder.build(
                 old: plan.originalName,
                 new: plan.targetName
             )
-            .font(.body)
-            .fontWeight(.semibold)
+
+            // 差分表示
+            DiffTextView(
+                segments: segments,
+                font: .system(size: 14, weight: .semibold, design: .monospaced)
+            )
 
             if !plan.warnings.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
+
                     Text("\(plan.warnings.count) warning")
                         .font(.caption)
                         .foregroundColor(.orange)

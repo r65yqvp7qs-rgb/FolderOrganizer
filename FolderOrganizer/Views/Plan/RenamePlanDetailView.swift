@@ -1,4 +1,6 @@
-// Views/RenamePlanDetailView.swift
+//
+// Views/Plan/RenamePlanDetailView.swift
+//
 import SwiftUI
 
 struct RenamePlanDetailView: View {
@@ -13,14 +15,24 @@ struct RenamePlanDetailView: View {
 
                 LabeledContent("Before") {
                     Text(plan.originalName)
+                        .font(.system(size: 13, design: .monospaced))
                 }
 
                 LabeledContent("After") {
-                    DiffBuilder.highlightDiff(
+
+                    let segments = DiffBuilder.build(
                         old: plan.originalName,
                         new: plan.targetName
                     )
-                    .fontWeight(.semibold)
+
+                    DiffTextView(
+                        segments: segments,
+                        font: .system(
+                            size: 13,
+                            weight: .semibold,
+                            design: .monospaced
+                        )
+                    )
                 }
             }
 
@@ -35,7 +47,6 @@ struct RenamePlanDetailView: View {
             if !plan.warnings.isEmpty {
                 Section("Warnings") {
                     ForEach(Array(plan.warnings.enumerated()), id: \.offset) { _, warning in
-                        // warning が message を持つ想定（持ってない場合は RenameWarning 側で合わせる）
                         Text(warning.message)
                             .foregroundColor(.orange)
                     }
