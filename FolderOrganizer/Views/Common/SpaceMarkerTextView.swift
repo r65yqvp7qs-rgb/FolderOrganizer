@@ -3,11 +3,6 @@
 //
 import SwiftUI
 
-/// スペース可視化対応テキスト表示View
-///
-/// - 半角スペース: ␣ (U+2423)
-/// - 全角スペース: □ (U+25A1)
-/// - ON/OFFでレイアウト・文字サイズが変わらない
 struct SpaceMarkerTextView: View {
 
     private let text: String
@@ -30,33 +25,40 @@ struct SpaceMarkerTextView: View {
 
     var body: some View {
         Text(renderedText)
-            .font(font)
+            .font(font) // ← View 側（保険）
     }
 
-    /// 表示用 AttributedString を生成
     private var renderedText: AttributedString {
         guard showSpaceMarkers else {
-            return AttributedString(text)
+            var plain = AttributedString(text)
+            plain.font = font           // ✅ ここ重要
+            return plain
         }
 
         var result = AttributedString()
+        result.font = font              // ✅ 全体に先に適用
 
         for character in text {
             switch character {
+
+            // 半角スペース
             case " ":
                 var marked = AttributedString("␣")
-                marked.foregroundColor = .secondary
+                marked.foregroundColor = .orange
+                marked.font = font      // ✅ 明示
                 result.append(marked)
 
+            // 全角スペース
             case "　":
                 var marked = AttributedString("□")
-                marked.foregroundColor = .secondary
+                marked.foregroundColor = .orange
+                marked.font = font      // ✅ 明示
                 result.append(marked)
 
             default:
-                result.append(
-                    AttributedString(String(character))
-                )
+                var normal = AttributedString(String(character))
+                normal.font = font      // ✅ 明示
+                result.append(normal)
             }
         }
 
