@@ -10,20 +10,23 @@ struct ContentView: View {
     @State private var showSpaceMarkers: Bool = true
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
 
-            // タイトル
-            Text("Folder Organizer")
-                .font(.largeTitle)
-                .bold()
-                // ✅ macOS らしい余白（タイトルバーとの干渉防止）
-                .padding(.top, 12)
+            // タイトル（macOS らしい余白）
+            VStack(spacing: 8) {
+                Text("Folder Organizer")
+                    .font(.largeTitle)
+                    .bold()
 
-            Button("フォルダ名を読み込んで変換プレビュー") {
-                loadDummy()
+                Button("フォルダ名を読み込んで変換プレビュー") {
+                    loadDummy()
+                }
+
+                Toggle("スペース可視化", isOn: $showSpaceMarkers)
+                    .toggleStyle(.checkbox)
             }
-
-            Toggle("スペース可視化", isOn: $showSpaceMarkers)
+            .padding(.top, 24)
+            .padding(.bottom, 12)
 
             RenamePreviewList(
                 items: $items,
@@ -36,16 +39,12 @@ struct ContentView: View {
 
             Spacer()
         }
-        .padding(18)
-
-        // ✅ 背景（ライトモードでも眩しくならない）
+        .padding(24)
+        // ✅ macOS 正統派背景
         .background(
             Color(nsColor: .windowBackgroundColor)
         )
-
-        // ✅ 上だけ SafeArea を守る（タイトル見切れ防止）
-        .ignoresSafeArea(edges: [.bottom, .leading, .trailing])
-
+        .ignoresSafeArea()
         .onAppear {
             if items.isEmpty {
                 loadDummy()
@@ -53,7 +52,6 @@ struct ContentView: View {
         }
     }
 
-    // ダミーデータ
     private func loadDummy() {
         items = [
             RenameItem(
