@@ -1,11 +1,11 @@
 //
-// Views/Rename/Preview/PreviewListContent.swift
+// Views/Rename/Preview/PreviewListContentView.swift
 // 【新規】Preview 一覧本体
 //
 import SwiftUI
 
 /// 旧 PreviewListContent（互換用）
-struct PreviewListContent: View {
+struct PreviewListContentView: View {
 
     @Binding var items: [RenameItem]
     @Binding var selectedIndex: Int?
@@ -16,7 +16,7 @@ struct PreviewListContent: View {
     var body: some View {
         LazyVStack(spacing: 6) {
             ForEach(Array(items.indices), id: \.self) { index in
-                PreviewRow(
+                PreviewRowView(
                     item: items[index],
                     index: index,
                     isSelected: selectedIndex == index,

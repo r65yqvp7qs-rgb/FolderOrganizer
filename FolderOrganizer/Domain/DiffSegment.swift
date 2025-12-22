@@ -1,5 +1,5 @@
 //
-// Models/DiffSegment.swift
+// Domain/DiffSegment.swift
 //
 import Foundation
 

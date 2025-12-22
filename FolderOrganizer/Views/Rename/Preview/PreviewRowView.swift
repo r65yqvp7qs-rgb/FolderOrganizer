@@ -1,12 +1,12 @@
 //
-// Views/Rename/Preview/PreviewRow.swift
+// Views/Rename/Preview/PreviewRowView.swift
 // 【新規】Preview 行表示（1行分）
 //
 import SwiftUI
 
 /// 旧 PreviewRow（互換用）
 /// - 中身は RenameRowView に寄せる
-struct PreviewRow: View {
+struct PreviewRowView: View {
 
     let item: RenameItem
     let index: Int
