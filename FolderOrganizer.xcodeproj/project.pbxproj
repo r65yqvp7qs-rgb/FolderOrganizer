@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		54F62E112EF902C700D14F92 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 54F62DC52EF902C700D14F92 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5488C3462EDDCB780084590A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		5488C3342EDDCB750084590A /* FolderOrganizer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FolderOrganizer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5488C3452EDDCB780084590A /* FolderOrganizerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FolderOrganizerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5488C34F2EDDCB780084590A /* FolderOrganizerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FolderOrganizerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		54F62DC52EF902C700D14F92 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -100,6 +105,7 @@
 				5488C3482EDDCB780084590A /* FolderOrganizerTests */,
 				5488C3522EDDCB780084590A /* FolderOrganizerUITests */,
 				5488C3352EDDCB750084590A /* Products */,
+				54F62DC52EF902C700D14F92 /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -233,6 +239,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				54F62E112EF902C700D14F92 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
