@@ -7,19 +7,28 @@ import SwiftUI
 struct UndoResultRowView: View {
 
     let result: UndoResult
-    let success: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
 
             HStack(spacing: 8) {
-                Image(systemName: success ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                    .foregroundColor(success ? .green : .orange)
+                Image(systemName: result.success
+                      ? "arrow.uturn.backward.circle.fill"
+                      : "xmark.octagon.fill")
+                    .foregroundColor(result.success ? .green : .orange)
 
-                Text(result.plan.originalName)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                // 元の名前（ApplyResult 経由）
+                Text(result.applyResult.plan.originalName)
+                    .font(
+                        .system(
+                            size: 13,
+                            weight: .semibold,
+                            design: .monospaced
+                        )
+                    )
             }
 
+            // エラー表示
             if let error = result.error {
                 Text(error.localizedDescription)
                     .font(.caption)
