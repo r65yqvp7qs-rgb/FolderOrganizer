@@ -1,19 +1,16 @@
 //
 // Views/Rename/Apply/ApplyResultView.swift
-// Apply 実行結果表示ビュー
+// Apply 実行結果表示ビュー（共通 Row 使用）
 //
 import SwiftUI
 
-/// Apply 実行後の結果表示
-/// - 成功 / 失敗を一覧で表示
-/// - Undo への導線を提供する
 struct ApplyResultView: View {
 
     // MARK: - Inputs
 
     let results: [ApplyResult]
 
-    /// Undo を開始する
+    /// Undo を開始する（成功分のみ渡す）
     let onUndo: ([ApplyResult]) -> Void
 
     /// 完了して閉じる
@@ -36,7 +33,6 @@ struct ApplyResultView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
 
-            // タイトル
             Text("Apply Result")
                 .font(.title2)
                 .bold()
@@ -60,9 +56,9 @@ struct ApplyResultView: View {
             // 成功一覧
             if !successResults.isEmpty {
                 Section {
-                    resultList(successResults, success: true)
+                    resultList(successResults)
                 } header: {
-                    Text("成功した変更")
+                    Text("適用された項目")
                         .font(.headline)
                 }
             }
@@ -70,9 +66,9 @@ struct ApplyResultView: View {
             // 失敗一覧
             if !failureResults.isEmpty {
                 Section {
-                    resultList(failureResults, success: false)
+                    resultList(failureResults)
                 } header: {
-                    Text("失敗した変更")
+                    Text("失敗した項目")
                         .font(.headline)
                 }
             }
@@ -81,7 +77,6 @@ struct ApplyResultView: View {
 
             Divider()
 
-            // アクション
             HStack {
                 Button("Undo") {
                     onUndo(successResults)
@@ -90,7 +85,7 @@ struct ApplyResultView: View {
 
                 Spacer()
 
-                Button("完了") {
+                Button("閉じる") {
                     onClose()
                 }
                 .keyboardShortcut(.defaultAction)
@@ -125,16 +120,14 @@ struct ApplyResultView: View {
         )
     }
 
-    private func resultList(
-        _ items: [ApplyResult],
-        success: Bool
-    ) -> some View {
+    private func resultList(_ items: [ApplyResult]) -> some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 8) {
                 ForEach(items) { result in
-                    ApplyResultRowView(
-                        result: result,
-                        success: success
+                    ExecutionResultRowView(
+                        success: result.success,
+                        title: result.plan.targetName,
+                        errorMessage: result.error?.localizedDescription
                     )
                 }
             }
