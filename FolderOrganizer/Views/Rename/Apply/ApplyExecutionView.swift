@@ -1,94 +1,90 @@
+//
+// Views/Rename/Apply/ApplyExecutionView.swift
+//
 import SwiftUI
 
 struct ApplyExecutionView: View {
 
+    // MARK: - Dependencies
+
     let plans: [RenamePlan]
+    let applyService: RenameApplyService
 
-    @State private var results: [ApplyResult] = []
-    @State private var undoResults: [UndoResult] = []
-    @State private var executed = false
-    @State private var undone = false
+    let onFinish: ([ApplyResult]) -> Void
+    let onCancel: () -> Void
 
-    private let applyService = DefaultRenameApplyService()
-    private let undoService = DefaultRenameUndoService()
+    // MARK: - State
+
+    @State private var progress: Double = 0
+    @State private var currentIndex: Int = 0
+    @State private var isCancelled: Bool = false
+    @State private var isFinished: Bool = false
+
+    // MARK: - Body
 
     var body: some View {
-        List {
+        VStack(spacing: 24) {
 
-            if !executed {
-                Button {
-                    execute()
-                } label: {
-                    Text("Execute Apply")
-                        .frame(maxWidth: .infinity)
+            Text("リネームを実行中…")
+                .font(.title2)
+                .bold()
+
+            ProgressView(
+                value: progress,
+                total: Double(plans.count)
+            )
+            .frame(maxWidth: 360)
+
+            Text(progressText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            HStack {
+                Spacer()
+                Button("キャンセル") {
+                    isCancelled = true
+                    onCancel()
                 }
-                .buttonStyle(.borderedProminent)
-            }
-
-            if executed && !undone {
-                Button {
-                    undo()
-                } label: {
-                    Text("Undo All")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .foregroundColor(.orange)
-            }
-
-            Section("Apply Results") {
-                ForEach(results) { result in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(result.plan.originalName)
-
-                        if result.success {
-                            Label("Applied", systemImage: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                        } else if let error = result.error {
-                            Label(error.localizedDescription,
-                                  systemImage: "xmark.circle.fill")
-                                .foregroundColor(.red)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-
-            if undone {
-                Section("Undo Results") {
-                    ForEach(undoResults) { result in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(result.applyResult.plan.originalName)
-
-                            if result.success {
-                                Label("Restored",
-                                      systemImage: "arrow.uturn.backward.circle.fill")
-                                    .foregroundColor(.blue)
-                            } else if let error = result.error {
-                                Label(error.localizedDescription,
-                                      systemImage: "xmark.circle.fill")
-                                    .foregroundColor(.red)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
+                .disabled(isFinished)
             }
         }
-        .navigationTitle("Apply Result")
+        .padding(32)
+        .frame(minWidth: 420, minHeight: 260)
+        .task {
+            await execute()
+        }
     }
 
-    private func execute() {
-        results = plans.map {
-            applyService.apply($0)
-        }
-        executed = true
+    // MARK: - Progress text
+
+    private var progressText: String {
+        isFinished
+        ? "完了"
+        : "\(currentIndex) / \(plans.count)"
     }
 
-    private func undo() {
-        undoResults = results.map {
-            undoService.undo($0)
+    // MARK: - Execution
+
+    private func execute() async {
+        var results: [ApplyResult] = []
+
+        for (index, plan) in plans.enumerated() {
+
+            if isCancelled { break }
+
+            // ✅ try / catch 不要
+            let result = applyService.apply(plan)
+            results.append(result)
+
+            currentIndex = index + 1
+            progress = Double(currentIndex)
+
+            try? await Task.sleep(nanoseconds: 80_000_000)
         }
-        undone = true
+
+        isFinished = true
+        onFinish(results)
     }
 }

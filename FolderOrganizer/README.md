@@ -166,6 +166,9 @@ Rename の適用は、以下の段階を踏む安全設計とする。
 Apply / Undo は UI・Logic・Infrastructure を分離し、
 将来的な DryRun / 再実行 / ログ保存に対応できる構成とする。
 
+- RenamePreviewRowView: Rename 専用の最終 Preview 表示
+- PreviewRowView: Preview 一覧のための互換レイヤー（RenameRowView に委譲）
+
 ## 今後の拡張メモ
 
 - Undo / Redo
@@ -175,3 +178,327 @@ Apply / Undo は UI・Logic・Infrastructure を分離し、
 
 これらは Domain / Logic 層に閉じる形で追加する想定。
 
+
+# STEP 2️⃣（現時点の設計を固定する版） 
+
+# FolderOrganizer
+
+フォルダ名を安全に整理・正規化する macOS アプリ。
+リネーム処理を Dry Run → Preview → Apply → Undo の流れで可視化し、
+ユーザー判断を取り込みながら安全に実行することを目的とする。
+
+---
+
+## コンセプト
+- 壊さないリネーム
+- 直接変更しない
+- まず Preview / Diff を見せる
+- 人間の判断を組み込む
+- subtitle / author などは自動判定＋手動判断
+- やり直せる
+- Apply 後も Undo 可能
+- UI と Domain を分離
+- ロジックは Domain、表示は Views
+
+---
+
+## 全体構成
+
+FolderOrganizer
+├─ App
+│  └─ ContentView.swift
+│
+├─ Domain
+│  ├─ Apply
+│  ├─ Normalize
+│  ├─ RenamePlan
+│  ├─ RoleDetection
+│  ├─ Undo
+│  └─ DiffSegment / DiffToken
+│
+├─ Logic
+│  ├─ RenamePlanEngine
+│  ├─ DiffBuilder
+│  └─ NameNormalizer
+│
+├─ Views
+│  ├─ Common
+│  ├─ Rename
+│  │  ├─ Preview
+│  │  ├─ Detail
+│  │  ├─ Edit
+│  │  ├─ Apply
+│  │  └─ List
+│  └─ Settings
+│
+└─ Tests
+
+---
+
+## Rename フロー（UI）
+
+Preview List
+   ↓
+Rename Preview (Detail)
+   ↓
+Edit（手動修正）
+   ↓
+Apply Confirmation
+   ↓
+Apply / Undo
+
+Preview
+- RenamePreviewListView
+- RenamePreviewRowView
+
+## 役割：
+- 複数リネーム候補を一覧表示
+- SpaceMarker / Diff 表示で差分を可視化
+
+Preview（互換レイヤー）
+- PreviewListContentView
+- PreviewRowView
+
+既存構造との互換用ラッパー
+中身は RenamePreviewRowView に委譲している
+将来削除候補（README に明示）
+
+---
+
+## Diff 表示
+- Domain
+- DiffSegment
+- DiffToken
+- Logic
+- DiffBuilder
+- View
+- DiffTextView
+
+責務分離：
+
+Domain: 差分の意味（追加 / 削除 / 同一）
+Logic : 差分の生成
+View  : 色・フォントによる表示
+
+---
+
+## スペース可視化
+- SpaceMarkerTextView
+- 半角スペース：␣
+- 全角スペース：□
+- Diff / Preview / Detail すべて共通
+
+UI 側で統一し、
+文字列ロジックには影響させない。
+
+---
+
+## Edit（手動修正）
+- RenameEditView
+- MonospaceTextEditor
+
+方針：
+    •    モノスペースで差分が見やすい
+    •    Common View として再利用可能なため Views/Common に配置
+
+---
+
+Apply / Undo
+    •    Domain
+    •    ApplyResult
+    •    DefaultRenameApplyService
+    •    DefaultRenameUndoService
+    •    UI
+    •    ApplyConfirmationView
+    •    ApplyExecutionView
+
+ApplyResult について
+- UI ではない
+- リネーム操作の結果を表す Domain 型
+- Undo / Export / Import で共通利用
+
+→ Domain/Apply に置くのが正解
+
+---
+
+## Subtitle / Author 判定
+- 自動判定：RoleDetector
+- 手動判断：
+- MaybeSubtitleDecisionView
+- UserDecisionStore
+
+ユーザー判断は保存され、
+次回以降の RenamePlan に反映される。
+
+---
+
+## 設計方針まとめ
+- View 名は必ず ◯◯View
+- Domain は UI に依存しない
+- Preview / Rename / Apply は View フォルダで明確に分離
+- 「将来消す可能性のある View」は README に明記する
+
+---
+
+## 現在の状態
+- Preview / Diff / SpaceMarker：安定
+- Rename/Edit：整理完了
+- Apply / Undo：UI 仕上げ段階
+- README：設計のスナップショットとして固定
+
+---
+
+## 今後の予定
+- Apply / Undo UI の最終調整
+- Rename/Edit の細部 UX 改善
+- 不要 View の段階的削除
+- JSON Export / Import の UI 接続
+
+---
+
+Rename/Edit は「文字列の編集と人間の判断」に専念し、
+差分生成・適用・取り消しは扱わない。
+
+---
+
+PreviewListContentView / PreviewRowView は旧構造互換のため残置。将来削除予定。
+
+---
+
+MonospaceTextEditor は Rename/Edit に限らず、
+差分・結果・JSON 表示など複数箇所で使われるため Common に配置する。
+
+---
+
+
+# FolderOrganizer
+
+macOS 向けのフォルダ名整理・リネーム支援アプリ。
+
+直接リネームを実行するのではなく、
+Dry Run → Preview → Apply → Undo の流れを通し、
+差分を視覚的に確認しながら安全に処理することを目的とする。
+
+---
+
+## 基本方針
+
+- 壊さない（必ず Preview を挟む）
+- 人間の判断を尊重する
+- やり直せる（Undo 前提）
+- UI / Domain / Logic を分離する
+
+---
+
+## ディレクトリ構成
+
+FolderOrganizer
+├─ App
+├─ Domain
+│  ├─ Apply
+│  ├─ Undo
+│  ├─ RenamePlan
+│  ├─ RoleDetection
+│  └─ DiffToken / DiffSegment
+│
+├─ Logic
+│  ├─ RenamePlanEngine
+│  ├─ DiffBuilder
+│  └─ NameNormalizer
+│
+├─ Views
+│  ├─ Common
+│  └─ Rename
+│     ├─ List
+│     ├─ Preview
+│     ├─ Detail
+│     ├─ Edit
+│     └─ Apply
+│
+└─ Tests
+
+---
+
+## Rename フロー
+
+List
+↓
+Preview
+↓
+Detail / Edit
+↓
+Apply Confirmation
+↓
+Apply Execution
+↓
+Result / Undo
+
+---
+
+## Preview Views
+
+### 正式 View
+- RenamePreviewListView
+- RenamePreviewRowView
+
+### Legacy View（互換用）
+- PreviewListContentView
+- PreviewRowView
+
+これらは旧構造互換のため残しており、
+新規実装では使用しない。将来削除予定。
+
+---
+
+## Edit / Decision
+
+- RenameEditView  
+  文字列編集専用 View。Diff 生成や Apply 処理は行わない。
+
+- MaybeSubtitleDecisionView  
+  subtitle 判定をユーザーに委ねる補助 View。
+  判断結果は UserDecisionStore に保存される。
+
+---
+
+## Diff 表示
+
+- Domain: DiffToken / DiffSegment
+- Logic : DiffBuilder
+- View  : DiffTextView
+
+Diff は Git 的な完全差分ではなく、
+新しい名前を読むための最小差分表示とする。
+
+---
+
+## Common Views
+
+- SpaceMarkerTextView
+- DiffTextView
+- MonospaceTextEditor
+
+これらは文脈を持たない UI 部品として Common に配置する。
+
+---
+
+## Apply / Undo
+
+- Domain: ApplyResult / UndoResult
+- Logic : ApplyService / UndoService
+- View  : ApplyConfirmationView / ApplyExecutionView / ResultView
+
+ApplyResult は UI ではなく Domain 型であり、
+Undo / Export / Import で共通利用される。
+
+---
+
+## 設計ルール
+
+- View は必ず `◯◯View`
+- Domain は UI を知らない
+- Legacy View は README に明記する
+- 削除は「検索0件 + ビルド通過」を条件とする
+
+
+⸻

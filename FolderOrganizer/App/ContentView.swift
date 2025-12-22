@@ -28,7 +28,7 @@ struct ContentView: View {
             .padding(.top, 24)
             .padding(.bottom, 12)
 
-            RenamePreviewList(
+            RenamePreviewListView(
                 items: $items,
                 selectedIndex: $selectedIndex,
                 showSpaceMarkers: showSpaceMarkers,

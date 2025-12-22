@@ -1,5 +1,5 @@
 //
-// Views/Rename/RenamePreviewList.swift
+// Views/Rename/RenamePreviewListView.swift
 //
 import SwiftUI
 
@@ -8,7 +8,7 @@ import SwiftUI
 /// - selectedIndex: 選択中 index（Binding）
 /// - showSpaceMarkers: スペース可視化 ON/OFF
 /// - onSelect: 行タップ時に呼ばれる（外側で selectedIndex 更新などに使う）
-struct RenamePreviewList: View {
+struct RenamePreviewListView: View {
 
     @Binding var items: [RenameItem]
     @Binding var selectedIndex: Int?
@@ -26,7 +26,7 @@ struct RenamePreviewList: View {
                 ForEach(items.indices, id: \.self) { index in
                     let item = items[index]
 
-                    RenamePreviewRow(
+                    RenamePreviewRowView(
                         item: item,
                         showSpaceMarkers: showSpaceMarkers,
                         onEdit: {

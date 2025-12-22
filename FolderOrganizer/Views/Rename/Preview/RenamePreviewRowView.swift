@@ -1,9 +1,9 @@
 //
-// Views/Rename/RenamePreviewRow.swift
+// Views/Rename/RenamePreviewRowView.swift
 //
 import SwiftUI
 
-struct RenamePreviewRow: View {
+struct RenamePreviewRowView: View {
 
     let item: RenameItem
     let showSpaceMarkers: Bool
