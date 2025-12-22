@@ -4,8 +4,6 @@
 //
 import SwiftUI
 
-/// 旧 PreviewRow（互換用）
-/// - 中身は RenameRowView に寄せる
 struct PreviewRowView: View {
 
     let item: RenameItem
@@ -18,7 +16,7 @@ struct PreviewRowView: View {
     let onSelect: () -> Void
 
     var body: some View {
-        RenameRowView(
+        RenamePreviewRowView(
             item: item,
             showSpaceMarkers: showSpaceMarkers,
             onEdit: onSelect

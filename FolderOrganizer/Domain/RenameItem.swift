@@ -4,20 +4,23 @@
 import Foundation
 
 struct RenameItem: Identifiable, Hashable {
-
     let id: UUID
-    let original: String
-    let normalized: String
+    var original: String
+    var normalized: String
     var edited: String
     var flagged: Bool
 
-    /// 一覧表示用の最終表示名
-    var displayNameForList: String {
-        edited.isEmpty ? normalized : edited
-    }
-
-    /// 変更が入っているか
-    var isModified: Bool {
-        !edited.isEmpty && edited != normalized
+    init(
+        id: UUID = UUID(),
+        original: String,
+        normalized: String,
+        edited: String = "",
+        flagged: Bool
+    ) {
+        self.id = id
+        self.original = original
+        self.normalized = normalized
+        self.edited = edited
+        self.flagged = flagged
     }
 }

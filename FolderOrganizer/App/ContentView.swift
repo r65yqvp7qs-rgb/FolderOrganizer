@@ -1,6 +1,5 @@
-//
 // App/ContentView.swift
-//
+
 import SwiftUI
 
 struct ContentView: View {
@@ -12,25 +11,13 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 16) {
 
-            // タイトル（macOS らしい余白）
-            VStack(spacing: 8) {
-                Text("Folder Organizer")
-                    .font(.largeTitle)
-                    .bold()
-
-                Button("フォルダ名を読み込んで変換プレビュー") {
-                    loadDummy()
-                }
-
-                Toggle("スペース可視化", isOn: $showSpaceMarkers)
-                    .toggleStyle(.checkbox)
-            }
-            .padding(.top, 24)
-            .padding(.bottom, 12)
+            Toggle("スペース可視化", isOn: $showSpaceMarkers)
+                .toggleStyle(.checkbox)
+                .padding(.top, 24)
+                .padding(.bottom, 12)
 
             RenamePreviewListView(
                 items: $items,
-                selectedIndex: $selectedIndex,
                 showSpaceMarkers: showSpaceMarkers,
                 onSelect: { index in
                     selectedIndex = index
@@ -40,32 +27,29 @@ struct ContentView: View {
             Spacer()
         }
         .padding(24)
-        // ✅ macOS 正統派背景
-        .background(
-            Color(nsColor: .windowBackgroundColor)
-        )
+        .background(Color(nsColor: .windowBackgroundColor))
         .ignoresSafeArea()
         .onAppear {
-            if items.isEmpty {
-                loadDummy()
-            }
+            loadDummy()
         }
     }
 
+    // 仮データ読み込み
     private func loadDummy() {
         items = [
             RenameItem(
-                id: UUID(),
-                original: "sample  folder  name",
-                normalized: "sample folder name",
-                edited: "",
+                original: "[作者] 作品A",
+                normalized: "作品A",
                 flagged: false
             ),
             RenameItem(
-                id: UUID(),
-                original: "test　folder　name",
-                normalized: "test folder name",
-                edited: "",
+                original: "[作者] 作品B",
+                normalized: "作品B",
+                flagged: false
+            ),
+            RenameItem(
+                original: "[作者] 作品C",
+                normalized: "作品C",
                 flagged: false
             )
         ]

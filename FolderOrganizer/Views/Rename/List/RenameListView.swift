@@ -13,7 +13,7 @@ struct RenameListView: View {
     var body: some View {
         List {
             ForEach(items, id: \.id) { item in
-                RenameRowView(
+                RenamePreviewRowView(
                     item: item,
                     showSpaceMarkers: showSpaceMarkers,
                     onEdit: { editingItem = item }

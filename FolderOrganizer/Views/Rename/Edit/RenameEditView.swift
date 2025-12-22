@@ -1,7 +1,9 @@
-// Views/RenameEditView.swift
+// Views/Rename/Edit/RenameEditView.swift
+
 import SwiftUI
 
 struct RenameEditView: View {
+
     let item: RenameItem
     let showSpaceMarkers: Bool
     let onApply: (RenameItem) -> Void
@@ -19,7 +21,13 @@ struct RenameEditView: View {
         self.showSpaceMarkers = showSpaceMarkers
         self.onApply = onApply
         self.onCancel = onCancel
-        _editingText = State(initialValue: item.displayNameForList)
+
+        // ★ 表示名は View 側で決定
+        _editingText = State(
+            initialValue: item.edited.isEmpty
+                ? item.normalized
+                : item.edited
+        )
     }
 
     var body: some View {
@@ -48,27 +56,28 @@ struct RenameEditView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                TextEditor(text: $editingText)
-                    .font(.system(size: 14))
-                    .frame(minHeight: 240)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.gray.opacity(0.4))
-                    )
+                TextField("新しい名前", text: $editingText)
+                    .textFieldStyle(.roundedBorder)
             }
 
+            Spacer()
+
             HStack {
-                Button("キャンセル") { onCancel() }
+                Button("キャンセル") {
+                    onCancel()
+                }
+
                 Spacer()
-                Button("反映") {
+
+                Button("適用") {
                     var updated = item
                     updated.edited = editingText
                     onApply(updated)
                 }
-                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(18)
-        .frame(minWidth: 700, minHeight: 520)
+        .padding(20)
+        .frame(minWidth: 420, minHeight: 360)
     }
 }

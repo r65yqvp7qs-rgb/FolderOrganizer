@@ -1,6 +1,5 @@
-//
-// Views/Rename/RenamePreviewRowView.swift
-//
+// Views/Rename/Preview/RenamePreviewRowView.swift
+
 import SwiftUI
 
 struct RenamePreviewRowView: View {
@@ -9,25 +8,33 @@ struct RenamePreviewRowView: View {
     let showSpaceMarkers: Bool
     let onEdit: () -> Void
 
+    /// 行内で統一する等幅フォント
+    private let baseFont: Font = .system(
+        size: 13,
+        weight: .regular,
+        design: .monospaced
+    )
+
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        HStack(spacing: 12) {
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
 
-                // 元の名前（薄め）
+                // 旧名（薄く表示）
                 SpaceMarkerTextView(
                     item.original,
                     showSpaceMarkers: showSpaceMarkers,
-                    font: .system(size: 12, design: .monospaced)
+                    font: baseFont
                 )
-                .opacity(0.65)
+                .opacity(0.6)
 
-                // 新しい名前（主役）
+                // 新名プレビュー
                 SpaceMarkerTextView(
-                    item.displayNameForList,
+                    previewName,
                     showSpaceMarkers: showSpaceMarkers,
-                    font: .system(size: 14, weight: .semibold, design: .monospaced)
+                    font: baseFont
                 )
+                .opacity(0.9)
             }
 
             Spacer()
@@ -35,10 +42,12 @@ struct RenamePreviewRowView: View {
             Button("編集") {
                 onEdit()
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
         }
-        // ✅ Card 化
-        .cardStyle()
+        .padding(.vertical, 8)
+    }
+
+    /// Preview 用表示名
+    private var previewName: String {
+        item.edited.isEmpty ? item.normalized : item.edited
     }
 }
