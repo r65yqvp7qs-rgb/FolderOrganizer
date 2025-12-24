@@ -1,6 +1,5 @@
-//
 // Views/Plan/RenamePlanRowView.swift
-//
+
 import SwiftUI
 
 struct RenamePlanRowView: View {
@@ -13,11 +12,11 @@ struct RenamePlanRowView: View {
 
             // 差分生成
             let tokens = DiffBuilder.build(
-                old: plan.originalName,
-                new: plan.targetName
+                original: plan.originalName,
+                modified: plan.targetName
             )
 
-            // 差分表示（← ここが修正点）
+            // 差分表示
             DiffTextView(
                 tokens: tokens,
                 font: .system(size: 14, weight: .semibold, design: .monospaced)

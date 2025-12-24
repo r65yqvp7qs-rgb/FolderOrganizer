@@ -1,6 +1,8 @@
 //
 // Domain/RenameItem.swift
+// リネーム対象 1 件分のモデル
 //
+
 import Foundation
 
 struct RenameItem: Identifiable, Hashable {

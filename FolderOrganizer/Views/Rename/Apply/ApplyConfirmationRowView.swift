@@ -1,6 +1,5 @@
-//
 // Views/Rename/Apply/ApplyConfirmationRowView.swift
-//
+
 import SwiftUI
 
 /// Apply 確認用の 1 行表示
@@ -13,8 +12,8 @@ struct ApplyConfirmationRowView: View {
 
             // Diff
             let tokens = DiffBuilder.build(
-                old: plan.originalName,
-                new: plan.targetName
+                original: plan.originalName,
+                modified: plan.targetName
             )
 
             DiffTextView(

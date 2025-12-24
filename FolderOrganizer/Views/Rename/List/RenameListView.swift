@@ -1,38 +1,48 @@
-//
-// Views/RenameListView.swift
-//
+// Views/Rename/List/RenameListView.swift
 import SwiftUI
 
 struct RenameListView: View {
 
-    @State private var items: [RenameItem] = FileScanService.loadSampleNames()
-    @State private var editingItem: RenameItem?
+    @StateObject private var session = RenameSession(
+        items: FileScanService.loadSampleNames()
+    )
 
     let showSpaceMarkers: Bool
 
     var body: some View {
-        List {
-            ForEach(items, id: \.id) { item in
-                RenamePreviewRowView(
-                    item: item,
-                    showSpaceMarkers: showSpaceMarkers,
-                    onEdit: { editingItem = item }
-                )
+        ScrollViewReader { proxy in
+            List(selection: $session.selectedID) {
+
+                ForEach(session.items) { item in
+                    RenamePreviewRowView(
+                        item: item,
+                        showSpaceMarkers: showSpaceMarkers,
+                        onEdit: {
+                            session.selectedID = item.id
+                            session.isEditing = true
+                        }
+                    )
+                    .tag(item.id) // ★ List(selection:) とセット
+                    // macOS List は background より listRowBackground が安定
+                    .listRowBackground(
+                        session.selectedID == item.id
+                        ? Color.accentColor.opacity(0.15)
+                        : Color.clear
+                    )
+                    .id(item.id) // ★ scrollTo用
+                }
+            }
+            .onChange(of: session.selectedID) { _, newID in
+                guard let newID else { return }
+                withAnimation {
+                    proxy.scrollTo(newID, anchor: .center)
+                }
             }
         }
-        .sheet(item: $editingItem) { item in
+        .sheet(isPresented: $session.isEditing) {
             RenameEditView(
-                item: item,
-                showSpaceMarkers: showSpaceMarkers,
-                onApply: { updated in
-                    if let index = items.firstIndex(where: { $0.id == updated.id }) {
-                        items[index] = updated
-                    }
-                    editingItem = nil
-                },
-                onCancel: {
-                    editingItem = nil
-                }
+                session: session,
+                showSpaceMarkers: showSpaceMarkers
             )
         }
     }

@@ -1,83 +1,63 @@
+//
 // Views/Rename/Edit/RenameEditView.swift
+// 編集ビュー（上下移動対応）
+//
 
 import SwiftUI
 
 struct RenameEditView: View {
 
-    let item: RenameItem
+    @ObservedObject var session: RenameSession
     let showSpaceMarkers: Bool
-    let onApply: (RenameItem) -> Void
-    let onCancel: () -> Void
-
-    @State private var editingText: String = ""
-
-    init(
-        item: RenameItem,
-        showSpaceMarkers: Bool,
-        onApply: @escaping (RenameItem) -> Void,
-        onCancel: @escaping () -> Void
-    ) {
-        self.item = item
-        self.showSpaceMarkers = showSpaceMarkers
-        self.onApply = onApply
-        self.onCancel = onCancel
-
-        // ★ 表示名は View 側で決定
-        _editingText = State(
-            initialValue: item.edited.isEmpty
-                ? item.normalized
-                : item.edited
-        )
-    }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 0) {
+            header
 
-            // プレビュー
-            VStack(alignment: .leading, spacing: 6) {
-                Text("プレビュー")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                SpaceMarkerTextView(
-                    editingText,
-                    showSpaceMarkers: showSpaceMarkers,
-                    font: .system(size: 14, weight: .semibold, design: .monospaced)
-                )
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.thinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+            List(selection: $session.selectedID) {
+                ForEach(session.items) { item in
+                    Text(item.original)
+                        .tag(item.id)
+                        .listRowBackground(
+                            session.selectedID == item.id
+                            ? Color.accentColor.opacity(0.20)
+                            : Color.clear
+                        )
+                }
             }
+        }
+        .frame(minWidth: 420, minHeight: 320)
+    }
 
-            // 編集
-            VStack(alignment: .leading, spacing: 6) {
-                Text("編集")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    // MARK: - Header
 
-                TextField("新しい名前", text: $editingText)
-                    .textFieldStyle(.roundedBorder)
-            }
+    private var header: some View {
+        HStack {
+            Button("↑") { session.moveSelection(-1) }
+                .disabled(!(session.selectedIndex ?? 0 > 0))
+
+            Button("↓") { session.moveSelection(1) }
+                .disabled(!canMoveDown)
 
             Spacer()
 
-            HStack {
-                Button("キャンセル") {
-                    onCancel()
-                }
+            Text(positionText)
+                .foregroundColor(.secondary)
 
-                Spacer()
-
-                Button("適用") {
-                    var updated = item
-                    updated.edited = editingText
-                    onApply(updated)
-                }
-                .keyboardShortcut(.defaultAction)
+            Button("閉じる") {
+                session.isEditing = false
             }
         }
-        .padding(20)
-        .frame(minWidth: 420, minHeight: 360)
+        .padding()
+    }
+
+    private var canMoveDown: Bool {
+        guard let idx = session.selectedIndex else { return false }
+        return idx < session.items.count - 1
+    }
+
+    private var positionText: String {
+        guard let idx = session.selectedIndex else { return "-/-" }
+        return "\(idx + 1)/\(session.items.count)"
     }
 }
