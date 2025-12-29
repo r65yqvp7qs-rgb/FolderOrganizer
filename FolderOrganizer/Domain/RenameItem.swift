@@ -1,28 +1,22 @@
-//
 // Domain/RenameItem.swift
-// リネーム対象 1 件分のモデル
-//
-
 import Foundation
 
+/// リネーム対象 1 件
 struct RenameItem: Identifiable, Hashable {
     let id: UUID
-    var original: String
-    var normalized: String
-    var edited: String
+    let original: String
+    let normalized: String
     var flagged: Bool
 
     init(
         id: UUID = UUID(),
         original: String,
         normalized: String,
-        edited: String = "",
-        flagged: Bool
+        flagged: Bool = false
     ) {
         self.id = id
         self.original = original
         self.normalized = normalized
-        self.edited = edited
         self.flagged = flagged
     }
 }

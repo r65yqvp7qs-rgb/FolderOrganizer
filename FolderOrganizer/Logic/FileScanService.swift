@@ -25,7 +25,6 @@ struct FileScanService {
                 id: UUID(),
                 original: name,
                 normalized: normalized,
-                edited: normalized,   // 初期状態では normalized をそのまま編集対象に
                 flagged: false
             )
         }
