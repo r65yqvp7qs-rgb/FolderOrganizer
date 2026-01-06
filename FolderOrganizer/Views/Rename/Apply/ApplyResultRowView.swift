@@ -1,6 +1,7 @@
+// Views/Rename/Apply/ApplyResultRowView.swift
 //
-//  ApplyResultRowView.swift
-//  FolderOrganizer
+// ApplyResult 1件分を表示する Row View。
+// struct ApplyResult 前提の最終形。
 //
 
 import SwiftUI
@@ -23,28 +24,10 @@ struct ApplyResultRowView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                switch result {
-
-                case .success(
-                    plan: let plan,
-                    destinationURL: let destinationURL,
-                    rollback: _
-                ):
-                    Text(plan.originalName)
-                        .font(.system(size: 12, design: .monospaced))
-
-                    Text("→ \(destinationURL.lastPathComponent)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-
-                case .failure(let error):
-                    Text("Apply 失敗")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.red)
-
-                    Text(error.localizedDescription)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                if result.isSuccess {
+                    successView
+                } else {
+                    failureView
                 }
             }
 
@@ -52,23 +35,46 @@ struct ApplyResultRowView: View {
         }
     }
 
-    // MARK: - Icon
+    // MARK: - Success View
 
-    private var iconName: String {
-        switch result {
-        case .success:
-            return "checkmark.circle.fill"
-        case .failure:
-            return "xmark.octagon.fill"
+    private var successView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+
+            Text(result.plan.originalName)
+                .font(.system(size: 12, design: .monospaced))
+
+            if let undoInfo = result.undoInfo {
+                Text("→ \(undoInfo.from.lastPathComponent)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
-    private var iconColor: Color {
-        switch result {
-        case .success:
-            return .green
-        case .failure:
-            return .red
+    // MARK: - Failure View
+
+    private var failureView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+
+            Text("Apply 失敗")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.red)
+
+            if let error = result.error {
+                Text(error.localizedDescription)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
         }
+    }
+
+    // MARK: - Icon
+
+    private var iconName: String {
+        result.isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill"
+    }
+
+    private var iconColor: Color {
+        result.isSuccess ? .green : .red
     }
 }

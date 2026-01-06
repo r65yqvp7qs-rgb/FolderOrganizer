@@ -1,6 +1,7 @@
+// Infrastructure/Apply/DefaultRenameApplyService.swift
 //
-//  DefaultRenameApplyService.swift
-//  FolderOrganizer
+// RenamePlan を順番に適用するデフォルト実装。
+// ApplyService と同じ ApplyResult モデルを使用する。
 //
 
 import Foundation
@@ -16,35 +17,47 @@ final class DefaultRenameApplyService: RenameApplyService {
         var results: [ApplyResult] = []
 
         for plan in plans {
+
+            let fromURL = plan.originalURL
+            let toURL = plan.destinationURL
+
             do {
                 // MARK: - 1. Rename（move）
+                if fileManager.fileExists(atPath: toURL.path) {
+                    throw ApplyError.destinationAlreadyExists(toURL)
+                }
+
                 try fileManager.moveItem(
-                    at: plan.originalURL,
-                    to: plan.destinationURL
+                    at: fromURL,
+                    to: toURL
                 )
 
-                // MARK: - 2. Rollback 情報作成（Undo用）
-                let rollback = RollbackInfo(
-                    moves: [
-                        RollbackInfo.Move(
-                            from: plan.destinationURL, // Apply後
-                            to: plan.originalURL       // 元に戻す先
-                        )
-                    ]
+                // MARK: - 2. Undo 情報生成
+                let undoInfo = ApplyResult.UndoInfo(
+                    from: toURL,
+                    to: fromURL
                 )
 
                 // MARK: - 3. 成功 Result
-                let result: ApplyResult = .success(
+                let result = ApplyResult(
                     plan: plan,
-                    destinationURL: plan.destinationURL,
-                    rollback: rollback
+                    isSuccess: true,
+                    error: nil,
+                    undoInfo: undoInfo
                 )
 
                 results.append(result)
 
             } catch {
+
                 // MARK: - 4. 失敗 Result
-                let result: ApplyResult = .failure(error: error)
+                let result = ApplyResult(
+                    plan: plan,
+                    isSuccess: false,
+                    error: error,
+                    undoInfo: nil
+                )
+
                 results.append(result)
             }
         }

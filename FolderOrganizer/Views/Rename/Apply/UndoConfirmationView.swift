@@ -1,6 +1,7 @@
+// Views/Rename/Apply/UndoConfirmationView.swift
 //
-//  UndoConfirmationView.swift
-//  FolderOrganizer
+// Apply 後に Undo を実行する前の確認画面。
+// RollbackInfo.Move を使って Undo 内容を表示する。
 //
 
 import SwiftUI
@@ -8,20 +9,29 @@ import SwiftUI
 struct UndoConfirmationView: View {
 
     // MARK: - Input
+
     let results: [ApplyResult]
     let isExecuting: Bool
     let onExecute: () -> Void
     let onCancel: () -> Void
 
     // MARK: - Derived
+
+    /// Undo 対象となる Move 一覧
     private var rollbackMoves: [RollbackInfo.Move] {
         results.compactMap { result in
-            if case .success(_, _, let rollback) = result {
-                return rollback.moves
+            guard
+                result.isSuccess,
+                let undoInfo = result.undoInfo
+            else {
+                return nil
             }
-            return nil
+
+            return RollbackInfo.Move(
+                from: undoInfo.from,
+                to: undoInfo.to
+            )
         }
-        .flatMap { $0 }
     }
 
     private var descriptionText: String {
@@ -29,6 +39,7 @@ struct UndoConfirmationView: View {
     }
 
     // MARK: - View
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
 
@@ -51,26 +62,23 @@ struct UndoConfirmationView: View {
                     }
                 }
             }
-            .frame(maxHeight: 240)
 
             Divider()
 
-            if isExecuting {
-                ProgressView("Undo 実行中…")
-                    .progressViewStyle(.linear)
-            }
-
             HStack {
-                Button("キャンセル", action: onCancel)
-                    .disabled(isExecuting)
+                Button("キャンセル") {
+                    onCancel()
+                }
 
                 Spacer()
 
-                Button("Undo 実行", action: onExecute)
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(isExecuting)
+                Button("Undo 実行") {
+                    onExecute()
+                }
+                .disabled(isExecuting || rollbackMoves.isEmpty)
             }
         }
-        .padding(20)
+        .padding()
+        .frame(minWidth: 520, minHeight: 360)
     }
 }
