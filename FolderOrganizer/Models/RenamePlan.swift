@@ -21,7 +21,7 @@ struct RenamePlan: Identifiable {
     let originalName: String
 
     /// 正規化後の名前（候補）
-    let normalizedName: String
+    var normalizedName: String
 
     /// 役割検出結果
     let roles: [DetectedRole]

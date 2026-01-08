@@ -1,6 +1,10 @@
 //
-//  RenamePreviewList.swift
-//  FolderOrganizer
+//  Views/Rename/Preview/RenamePreviewList.swift
+//
+//  RenamePlan 一覧 + Inline Edit
+//  ・List 非依存
+//  ・スクロール常に中央
+//  ・編集結果は親へ通知
 //
 
 import SwiftUI
@@ -9,59 +13,64 @@ struct RenamePreviewList: View {
 
     // MARK: - Inputs
     let plans: [RenamePlan]
-    let selectedID: UUID?
-    let onSelect: (UUID) -> Void
-    let onCommit: () -> Void
+    @Binding var selectionIndex: Int?
+
+    /// 編集確定（親が実データを書き換える）
+    let onCommit: (_ index: Int, _ newName: String) -> Void
 
     // MARK: - Body
     var body: some View {
-        List(plans) { plan in
-            row(plan)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onSelect(plan.id)
+        ScrollViewReader { proxy in
+            content(proxy: proxy)
+                .onChange(of: selectionIndex) { _, newValue in
+                    guard let index = newValue else { return }
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        proxy.scrollTo(index, anchor: .center)
+                    }
                 }
         }
-        .onKeyPress(.return) {
-            onCommit()
-            return SwiftUI.KeyPress.Result.handled
+    }
+
+    // MARK: - Content（型推論を切る）
+    @ViewBuilder
+    private func content(proxy: ScrollViewProxy) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                ForEach(plans.indices, id: \.self) { index in
+                    row(at: index, proxy: proxy)
+                }
+            }
+            .padding(.vertical, 6)
         }
     }
 
     // MARK: - Row
     @ViewBuilder
-    private func row(_ plan: RenamePlan) -> some View {
-
-        let isChanged = plan.originalName != plan.normalizedName
-        let isSelected = (plan.id == selectedID)
-
-        HStack(spacing: 10) {
-
-            Image(systemName: isChanged ? "pencil.circle.fill" : "circle")
-                .foregroundStyle(isChanged ? .blue : .secondary)
-
-            VStack(alignment: .leading, spacing: 2) {
-
-                Text(plan.originalName)
-                    .font(.system(size: 13, design: .monospaced))
-                    .lineLimit(1)
-
-                if isChanged {
-                    Text("→ \(plan.normalizedName)")
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
+    private func row(at index: Int, proxy: ScrollViewProxy) -> some View {
+        RenamePreviewRow(
+            plan: plans[index],
+            isSelected: selectionIndex == index,
+            onCommit: { newName in
+                onCommit(index, newName)
+                selectionIndex = nil        // ← ★ Enterで一覧に戻る
+            },
+            onCancel: {
+                // Esc：選択解除（位置は保持）
+                selectionIndex = nil
             }
-
-            Spacer()
-        }
-        .padding(.vertical, 4)
-        .background(
-            isSelected
-            ? Color.accentColor.opacity(0.15)
-            : Color.clear
         )
-        .cornerRadius(6)
+        .id(index)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            select(index, proxy: proxy)
+        }
+    }
+
+    // MARK: - Selection
+    private func select(_ index: Int, proxy: ScrollViewProxy) {
+        selectionIndex = index
+        withAnimation(.easeOut(duration: 0.15)) {
+            proxy.scrollTo(index, anchor: .center)
+        }
     }
 }

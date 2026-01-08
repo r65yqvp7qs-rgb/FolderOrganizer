@@ -1,7 +1,13 @@
+// Views/Shared/KeyDownHandlingView.swift
+//
+// NSEvent を直接拾うための View
+//
+
 import SwiftUI
 import AppKit
 
 struct KeyDownHandlingView: NSViewRepresentable {
+
     let onKeyDown: (NSEvent) -> Void
 
     func makeNSView(context: Context) -> NSView {
@@ -27,11 +33,5 @@ struct KeyDownHandlingView: NSViewRepresentable {
                 NSEvent.removeMonitor(monitor)
             }
         }
-    }
-}
-
-extension View {
-    func onKeyDown(perform action: @escaping (NSEvent) -> Void) -> some View {
-        background(KeyDownHandlingView(onKeyDown: action))
     }
 }

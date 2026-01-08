@@ -15,7 +15,7 @@ struct ContentView: View {
     @State private var selectedFolderURL: URL?
     @State private var plans: [RenamePlan] = []
     @State private var errorMessage: String?
-    @State private var selectedID: UUID? = nil
+    @State private var selectionIndex: Int? = nil
 
     // MARK: - Services
 
@@ -56,13 +56,9 @@ struct ContentView: View {
             } else {
                 RenamePreviewList(
                     plans: plans,
-                    selectedID: selectedID,
-                    onSelect: { id in
-                        selectedID = id
-                    },
-                    onCommit: {
-                        // 今は何もしない
-                        // 次フェーズで「編集開始」や「Apply」に接続
+                    selectionIndex: $selectionIndex,
+                    onCommit: { index, newName in
+                        plans[index].normalizedName = newName
                     }
                 )
             }
@@ -93,7 +89,7 @@ struct ContentView: View {
     private func loadFolder(_ url: URL) {
         errorMessage = nil
         plans.removeAll()
-        selectedID = nil
+        selectionIndex = nil   // ← これが正解
 
         let result = scanService.scan(rootURL: url)
 
