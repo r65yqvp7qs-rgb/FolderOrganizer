@@ -1,10 +1,10 @@
 //
 //  Views/Rename/Preview/RenamePreviewRow.swift
 //
-//  Inline Edit Row（最終形）
-//  ・表示時：Text のみ
-//  ・編集時：TextEditor のみ（重ねない）
-//  ・Enter = 確定（改行不可）
+//  Inline Edit Row（STEP 3-1 完成版）
+//  ・非編集時：上下並び Diff
+//  ・編集時：元名＋TextEditor（同サイズ）
+//  ・Enter = 確定
 //  ・Esc = キャンセル
 //
 
@@ -18,7 +18,14 @@ struct RenamePreviewRow: View {
     let onCancel: () -> Void
 
     @State private var editingText: String = ""
+    @State private var isEditing: Bool = false
     @FocusState private var isFocused: Bool
+
+    /// 非編集時 基準サイズ
+    private let baseFontSize: CGFloat = 15
+
+    /// 編集時（約1.8倍）
+    private let editFontSize: CGFloat = 27
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -33,37 +40,38 @@ struct RenamePreviewRow: View {
                 )
                 .frame(width: 18)
 
-            VStack(alignment: .leading, spacing: isSelected ? 6 : 0) {
+            VStack(alignment: .leading, spacing: 4) {
 
-                if isSelected {
-
-                    // 補助（元の名前）
+                if isEditing {
+                    
+                    // 編集時：元の名前（折り返し完全対応）
                     Text(plan.originalName)
-                        .font(.system(size: 22, design: .monospaced))
+                        .font(.system(size: editFontSize, design: .monospaced))
                         .foregroundColor(.secondary)
-                        .lineLimit(nil)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    // 編集用（唯一の「新」）
+                        .fixedSize(horizontal: false, vertical: true) // ← ★重要
+                    
+                    // 編集対象（TextEditor）
                     TextEditor(text: $editingText)
-                        .font(.system(size: 22, weight: .semibold, design: .monospaced))
-                        .foregroundColor(.primary)
+                        .font(.system(
+                            size: editFontSize,
+                            weight: .semibold,
+                            design: .monospaced
+                        ))
                         .scrollDisabled(true)
                         .focused($isFocused)
-                        .padding(.horizontal, -4)   // ← 横を詰める
-                        .padding(.vertical, -6)     // ← 縦を詰める
+                        .fixedSize(horizontal: false, vertical: true) // ← ★重要
+                        .padding(.horizontal, -4)
+                        .padding(.vertical, -6)
                         .background(Color.clear)
-                        .onKeyPress { event in
-                            handleKey(event)
+                        .onKeyPress { press in
+                            handleKey(press)
                         }
-
                 } else {
-
-                    // 一覧表示
-                    Text(plan.normalizedName)
-                        .font(.system(size: 15, design: .monospaced))
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
+                    // 非編集時：Diff 表示
+                    DiffTextView(
+                        original: plan.originalName,
+                        normalized: plan.normalizedName
+                    )
                 }
             }
 
@@ -77,49 +85,33 @@ struct RenamePreviewRow: View {
             : Color.clear
         )
         .cornerRadius(8)
-        .onChange(of: isSelected) { selected in
-            if selected {
+        // 🔧 deprecated 回避（新API）
+        .onChange(of: isSelected) {
+            if isSelected {
                 editingText = plan.normalizedName
+                isEditing = true
                 DispatchQueue.main.async {
                     isFocused = true
                 }
+            } else if isEditing {
+                isEditing = false
+                onCancel()
             }
         }
     }
 
-    // MARK: - Editor Height（折り返し一致用）
-
-    private var editorHeight: CGFloat {
-        let lines = editingText.split(whereSeparator: \.isNewline).count
-        return max(28, CGFloat(lines) * 26)
-    }
-
     // MARK: - Key Handling
-
-    private func handleKey(_ event: KeyPress) -> KeyPress.Result {
-        switch event.key {
-        case .return:
-            commit()
+    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
+        if press.key == .return {
+            isEditing = false
+            onCommit(editingText)
             return .handled
-
-        case .escape:
-            cancel()
-            return .handled
-
-        default:
-            return .ignored
         }
-    }
-
-    // MARK: - Actions
-
-    private func commit() {
-        let trimmed = editingText.replacingOccurrences(of: "\n", with: "")
-        onCommit(trimmed)
-    }
-
-    private func cancel() {
-        editingText = plan.normalizedName
-        onCancel()
+        if press.key == .escape {
+            isEditing = false
+            onCancel()
+            return .handled
+        }
+        return .ignored
     }
 }

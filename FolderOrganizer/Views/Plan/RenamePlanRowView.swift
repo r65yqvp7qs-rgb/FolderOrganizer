@@ -17,16 +17,10 @@ struct RenamePlanRowView: View {
             let originalName = plan.originalName
             let modifiedName = plan.destinationURL.lastPathComponent
 
-            // 差分生成
-            let tokens = DiffBuilder.build(
-                original: originalName,
-                modified: modifiedName
-            )
-
             // 差分表示
             DiffTextView(
-                tokens: tokens,
-                font: .system(size: 14, weight: .semibold, design: .monospaced)
+                original: originalName,
+                normalized: modifiedName
             )
 
             // MARK: - Warning 表示
