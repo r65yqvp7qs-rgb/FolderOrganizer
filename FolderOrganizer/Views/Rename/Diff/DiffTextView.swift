@@ -1,9 +1,10 @@
 //
 //  Views/Rename/Diff/DiffTextView.swift
 //
-//  Diff 表示専用 View（STEP 3-2）
-//  ・上下並びで比較
-//  ・変更あり行だけを控えめに強調
+//  Diff 表示専用 View（STEP 3-3）
+//  ・上下並び比較
+//  ・変更あり行を強調（STEP 3-2）
+//  ・スペース可視化 ON/OFF 対応
 //
 
 import SwiftUI
@@ -12,10 +13,24 @@ struct DiffTextView: View {
 
     let original: String
     let normalized: String
+    let showSpaceMarkers: Bool   // ★ 追加
 
     /// 変更があるか
     var hasDiff: Bool {
         original != normalized
+    }
+
+    /// 表示用テキスト（スペース可視化対応）
+    private var originalText: String {
+        showSpaceMarkers
+        ? SpaceMarker.visualize(original)
+        : original
+    }
+
+    private var normalizedText: String {
+        showSpaceMarkers
+        ? SpaceMarker.visualize(normalized)
+        : normalized
     }
 
     /// 非編集時 基準フォント
@@ -24,22 +39,22 @@ struct DiffTextView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
 
-            // 元の名前（比較用）
-            Text(original)
+            // 元の名前
+            Text(originalText)
                 .font(baseFont)
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             // 変更後の名前
-            Text(normalized)
+            Text(normalizedText)
                 .font(
                     hasDiff
-                    ? baseFont.weight(.semibold)   // ← 強調
+                    ? baseFont.weight(.semibold)
                     : baseFont
                 )
                 .foregroundColor(
                     hasDiff
-                    ? Color.accentColor            // ← 控えめに色を寄せる
+                    ? Color.accentColor
                     : Color.primary
                 )
                 .fixedSize(horizontal: false, vertical: true)
@@ -50,16 +65,17 @@ struct DiffTextView: View {
 #if DEBUG
 struct DiffTextView_Previews: PreviewProvider {
     static var previews: some View {
-        VStack(alignment: .leading, spacing: 12) {
-
+        VStack(spacing: 12) {
             DiffTextView(
-                original: "[作者名] 作品タイトル",
-                normalized: "作品タイトル"
+                original: "タイトル　テスト",
+                normalized: "タイトル テスト",
+                showSpaceMarkers: true
             )
 
             DiffTextView(
-                original: "変更なしタイトル",
-                normalized: "変更なしタイトル"
+                original: "変更なし",
+                normalized: "変更なし",
+                showSpaceMarkers: false
             )
         }
         .padding()

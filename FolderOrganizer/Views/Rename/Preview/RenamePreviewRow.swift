@@ -1,9 +1,9 @@
 //
 //  Views/Rename/Preview/RenamePreviewRow.swift
 //
-//  Inline Edit Row（STEP 3-1 完成版）
-//  ・非編集時：上下並び Diff
-//  ・編集時：元名＋TextEditor（同サイズ）
+//  Inline Edit Row
+//  ・表示時：Diff 表示
+//  ・編集時：TextEditor
 //  ・Enter = 確定
 //  ・Esc = キャンセル
 //
@@ -12,45 +12,47 @@ import SwiftUI
 
 struct RenamePreviewRow: View {
 
+    // MARK: - Inputs
+
     let plan: RenamePlan
     let isSelected: Bool
+
+    /// スペース可視化（ContentView → List → Row で伝播）
+    let showSpaceMarkers: Bool
+
     let onCommit: (String) -> Void
     let onCancel: () -> Void
+
+    // MARK: - State
 
     @State private var editingText: String = ""
     @State private var isEditing: Bool = false
     @FocusState private var isFocused: Bool
 
-    /// 非編集時 基準サイズ
-    private let baseFontSize: CGFloat = 15
+    // MARK: - Constants
 
-    /// 編集時（約1.8倍）
-    private let editFontSize: CGFloat = 27
+    private let editFontSize: CGFloat = 15 * 1.8
+
+    // MARK: - Body
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
 
-            Image(systemName: plan.originalName == plan.normalizedName
-                  ? "circle"
-                  : "pencil.circle.fill")
-                .foregroundColor(
-                    plan.originalName == plan.normalizedName
-                    ? .secondary
-                    : .blue
-                )
+            Image(systemName: isEditing ? "pencil.circle.fill" : "circle")
+                .foregroundColor(isEditing ? .blue : .secondary)
                 .frame(width: 18)
 
             VStack(alignment: .leading, spacing: 4) {
 
                 if isEditing {
-                    
-                    // 編集時：元の名前（折り返し完全対応）
+
+                    // 編集時：元の名前（比較用）
                     Text(plan.originalName)
                         .font(.system(size: editFontSize, design: .monospaced))
                         .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true) // ← ★重要
-                    
-                    // 編集対象（TextEditor）
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    // 編集対象
                     TextEditor(text: $editingText)
                         .font(.system(
                             size: editFontSize,
@@ -59,18 +61,21 @@ struct RenamePreviewRow: View {
                         ))
                         .scrollDisabled(true)
                         .focused($isFocused)
-                        .fixedSize(horizontal: false, vertical: true) // ← ★重要
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, -4)
                         .padding(.vertical, -6)
                         .background(Color.clear)
                         .onKeyPress { press in
                             handleKey(press)
                         }
+
                 } else {
+
                     // 非編集時：Diff 表示
                     DiffTextView(
                         original: plan.originalName,
-                        normalized: plan.normalizedName
+                        normalized: plan.normalizedName,
+                        showSpaceMarkers: showSpaceMarkers
                     )
                 }
             }
@@ -85,9 +90,8 @@ struct RenamePreviewRow: View {
             : Color.clear
         )
         .cornerRadius(8)
-        // 🔧 deprecated 回避（新API）
-        .onChange(of: isSelected) {
-            if isSelected {
+        .onChange(of: isSelected) { _, selected in
+            if selected {
                 editingText = plan.normalizedName
                 isEditing = true
                 DispatchQueue.main.async {
@@ -101,17 +105,20 @@ struct RenamePreviewRow: View {
     }
 
     // MARK: - Key Handling
+
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         if press.key == .return {
             isEditing = false
             onCommit(editingText)
             return .handled
         }
+
         if press.key == .escape {
             isEditing = false
             onCancel()
             return .handled
         }
+
         return .ignored
     }
 }

@@ -20,9 +20,9 @@ struct RenamePlanRowView: View {
             // 差分表示
             DiffTextView(
                 original: originalName,
-                normalized: modifiedName
+                normalized: modifiedName,
+                showSpaceMarkers: showSpaceMarkers
             )
-
             // MARK: - Warning 表示
             let warnings = plan.normalizeResult.warnings
 

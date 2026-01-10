@@ -17,6 +17,9 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var selectionIndex: Int? = nil
 
+    /// STEP 3-3: スペース可視化
+    @State private var showSpaceMarkers: Bool = false
+
     // MARK: - Services
 
     private let scanService = FileScanService()
@@ -39,7 +42,14 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+
+                Spacer()
             }
+
+            // View Option
+            Toggle("スペースを可視化", isOn: $showSpaceMarkers)
+                .toggleStyle(.checkbox)
+                .font(.caption)
 
             Divider()
 
@@ -57,6 +67,7 @@ struct ContentView: View {
                 RenamePreviewList(
                     plans: plans,
                     selectionIndex: $selectionIndex,
+                    showSpaceMarkers: showSpaceMarkers,
                     onCommit: { index, newName in
                         plans[index].normalizedName = newName
                     }
@@ -89,7 +100,7 @@ struct ContentView: View {
     private func loadFolder(_ url: URL) {
         errorMessage = nil
         plans.removeAll()
-        selectionIndex = nil   // ← これが正解
+        selectionIndex = nil
 
         let result = scanService.scan(rootURL: url)
 
