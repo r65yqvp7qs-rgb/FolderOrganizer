@@ -1,9 +1,10 @@
 //
 //  Views/Rename/Preview/DiffTextView.swift
 //
-//  original / normalized を Diff 表示
-//  ・文字単位 Diff（STEP 3-4）
-//  ・スペース可視化対応
+//  Myers Diff 表示（STEP 3-5 最終調整）
+//  ・insert / delete / equal 分離
+//  ・未変更スペースをアクセント系カラーで表示
+//  ・一覧視認性向上のため文字サイズ拡大
 //
 
 import SwiftUI
@@ -30,7 +31,8 @@ struct DiffTextView: View {
             render(tokens: diffResult.normalized)
                 .foregroundStyle(.primary)
         }
-        .font(.system(size: 13, design: .monospaced))
+        // 👇 Diff 前提で少し大きめ
+        .font(.system(size: 15, design: .monospaced))
     }
 
     // MARK: - Rendering
@@ -39,14 +41,33 @@ struct DiffTextView: View {
         tokens.reduce(Text("")) { result, token in
             let displayChar = visibleCharacter(token.character)
 
-            let text = Text(displayChar)
-                .foregroundColor(token.isChanged ? .red : nil)
+            let color: Color? = {
+                switch token.operation {
+                case .delete:
+                    return .red
 
-            return result + text
+                case .insert:
+                    return .green
+
+                case .equal:
+                    // 未変更スペースのみ「控えめなアクセント色」
+                    if isSpace(token.character) {
+                        return Color.accentColor.opacity(0.55)
+                    } else {
+                        return nil
+                    }
+                }
+            }()
+
+            return result + Text(displayChar).foregroundColor(color)
         }
     }
 
-    // MARK: - Space Visualization
+    // MARK: - Space Handling
+
+    private func isSpace(_ char: String) -> Bool {
+        char == " " || char == "　"
+    }
 
     private func visibleCharacter(_ char: String) -> String {
         guard showSpaceMarkers else { return char }
@@ -55,7 +76,7 @@ struct DiffTextView: View {
         case " ":
             return "␣"
         case "　":
-            return "␣␣"
+            return "□"   // 全角スペース
         default:
             return char
         }
