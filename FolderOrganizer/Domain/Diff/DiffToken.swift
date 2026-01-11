@@ -1,7 +1,8 @@
 //
 //  Domain/Diff/DiffToken.swift
 //
-//  Diff 表示用トークン（STEP 3-5）
+//  Diff 表示用トークン（STEP 3-6）
+//  ・operation に replace を追加
 //
 
 import Foundation

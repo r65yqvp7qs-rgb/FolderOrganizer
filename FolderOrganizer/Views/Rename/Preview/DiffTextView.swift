@@ -1,10 +1,9 @@
 //
 //  Views/Rename/Preview/DiffTextView.swift
 //
-//  Myers Diff 表示（STEP 3-5 最終調整）
-//  ・insert / delete / equal 分離
+//  Myers Diff 表示（STEP 3-6）
+//  ・insert / delete / replace / equal を色分け
 //  ・未変更スペースをアクセント系カラーで表示
-//  ・一覧視認性向上のため文字サイズ拡大
 //
 
 import SwiftUI
@@ -31,7 +30,6 @@ struct DiffTextView: View {
             render(tokens: diffResult.normalized)
                 .foregroundStyle(.primary)
         }
-        // 👇 Diff 前提で少し大きめ
         .font(.system(size: 15, design: .monospaced))
     }
 
@@ -48,6 +46,10 @@ struct DiffTextView: View {
 
                 case .insert:
                     return .green
+
+                case .replace:
+                    // ✅ 置換は insert/delete より控えめに目立たせる
+                    return .orange.opacity(0.85)
 
                 case .equal:
                     // 未変更スペースのみ「控えめなアクセント色」
@@ -76,7 +78,7 @@ struct DiffTextView: View {
         case " ":
             return "␣"
         case "　":
-            return "□"   // 全角スペース
+            return "□"   // 全角スペース（区別不要ならここも "␣" にしてOK）
         default:
             return char
         }
