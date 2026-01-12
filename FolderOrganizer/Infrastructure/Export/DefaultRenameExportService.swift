@@ -1,6 +1,6 @@
+// Infrastructure/Export/DefaultRenameExportService.swift
 //
-//  DefaultRenameExportService.swift
-//  FolderOrganizer
+// RenamePlan を JSON 用ドキュメントに変換する
 //
 
 import Foundation
@@ -16,7 +16,8 @@ final class DefaultRenameExportService {
             RenamePlanExportMapper.map($0)
         }
 
-        let issues: [RenameExportIssue] = RenameExportIssueBuilder.build(from: plans)
+        let issues: [RenameExportIssue] =
+            RenameExportIssueBuilder.build(from: plans)
 
         return RenameExportDocument(
             version: .v1,
@@ -27,4 +28,3 @@ final class DefaultRenameExportService {
         )
     }
 }
-

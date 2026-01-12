@@ -1,8 +1,6 @@
+// App/ContentView.swift
 //
-//  App/ContentView.swift
-//
-//  メイン画面。
-//  フォルダ選択 → スキャン → RenamePlan 生成 → Preview 表示
+// メイン画面
 //
 
 import SwiftUI
@@ -14,10 +12,7 @@ struct ContentView: View {
 
     @State private var selectedFolderURL: URL?
     @State private var plans: [RenamePlan] = []
-    @State private var errorMessage: String?
     @State private var selectionIndex: Int? = nil
-
-    /// STEP 3-3: スペース可視化
     @State private var showSpaceMarkers: Bool = false
 
     // MARK: - Services
@@ -30,7 +25,6 @@ struct ContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
 
-            // Header
             HStack {
                 Button("フォルダを選択") {
                     selectFolder()
@@ -46,38 +40,18 @@ struct ContentView: View {
                 Spacer()
             }
 
-            // View Option
-            Toggle("スペースを可視化", isOn: $showSpaceMarkers)
-                .toggleStyle(.checkbox)
-                .font(.caption)
+            Toggle("スペース可視化", isOn: $showSpaceMarkers)
 
-            Divider()
-
-            // Error
-            if let errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-            }
-
-            // Preview
-            if plans.isEmpty {
-                Text("フォルダを選択すると、リネームプレビューが表示されます。")
-                    .foregroundStyle(.secondary)
-            } else {
-                RenamePreviewList(
-                    plans: plans,
-                    selectionIndex: $selectionIndex,
-                    showSpaceMarkers: showSpaceMarkers,
-                    onCommit: { index, newName in
-                        plans[index].normalizedName = newName
-                    }
-                )
-            }
+            RenamePreviewList(
+                plans: plans,
+                selectionIndex: $selectionIndex,
+                showSpaceMarkers: showSpaceMarkers,
+                onCommit: handleCommit
+            )
 
             Spacer()
         }
         .padding()
-        .frame(minWidth: 700, minHeight: 500)
     }
 
     // MARK: - Actions
@@ -86,30 +60,41 @@ struct ContentView: View {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
 
-        guard panel.runModal() == .OK,
-              let url = panel.url else {
+        guard panel.runModal() == .OK, let folderURL = panel.url else {
             return
         }
 
-        selectedFolderURL = url
-        loadFolder(url)
+        selectedFolderURL = folderURL
+        rebuildPlans(for: folderURL)
     }
 
-    private func loadFolder(_ url: URL) {
-        errorMessage = nil
-        plans.removeAll()
-        selectionIndex = nil
+    private func rebuildPlans(for folderURL: URL) {
+        let result = scanService.scan(rootURL: folderURL)
+        plans = planEngine.generatePlans(
+            urls: result.urls,
+            targetParentURL: folderURL
+        )
+    }
 
-        let result = scanService.scan(rootURL: url)
+    /// RenamePreviewList からの確定編集
+    private func handleCommit(index: Int, newName: String) {
+        let oldPlan = plans[index]
+        let oldItem = oldPlan.item
 
-        if !result.errors.isEmpty {
-            errorMessage = "\(result.errors.count) 件のエラーが発生しました"
-        }
+        let newItem = RenameItem(
+            original: oldItem.original,
+            normalized: newName,
+            source: .manual,
+            issues: oldItem.issues
+        )
 
-        plans = result.urls.map {
-            planEngine.generatePlan(for: $0)
-        }
+        let newPlan = RenamePlan(
+            originalURL: oldPlan.originalURL,
+            targetParentURL: oldPlan.targetParentURL,
+            item: newItem
+        )
+
+        plans[index] = newPlan
     }
 }

@@ -31,7 +31,7 @@ struct RenamePreviewRow: View {
 
     /// 差分があるか（唯一の判定）
     private var hasDiff: Bool {
-        plan.originalName != plan.normalizedName
+        plan.originalURL.lastPathComponent != plan.item.finalName
     }
 
     // MARK: - Body
@@ -49,7 +49,7 @@ struct RenamePreviewRow: View {
                 if isEditing {
 
                     // 編集時：元の名前（参照用）
-                    Text(plan.originalName)
+                    Text(plan.originalURL.lastPathComponent)
                         .font(.system(size: editFontSize, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -75,8 +75,8 @@ struct RenamePreviewRow: View {
 
                     // 非編集時：Diff 表示
                     DiffTextView(
-                        original: plan.originalName,
-                        normalized: plan.normalizedName,
+                        original: plan.originalURL.lastPathComponent,
+                        normalized: plan.item.finalName,
                         showSpaceMarkers: showSpaceMarkers
                     )
                 }
@@ -94,7 +94,7 @@ struct RenamePreviewRow: View {
         .cornerRadius(8)
         .onChange(of: isSelected) { _, selected in
             if selected {
-                editingText = plan.normalizedName
+                editingText = plan.item.finalName
                 isEditing = true
                 DispatchQueue.main.async {
                     isFocused = true

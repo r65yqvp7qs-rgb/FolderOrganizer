@@ -1,12 +1,10 @@
 // Domain/Export/RenamePlanExport.swift
 //
-// RenamePlan の Export / Import 用 DTO。
-// JSON 保存・読み込み専用で、Domain モデルとは責務を分離する。
+// RenamePlan の Export DTO
 //
 
 import Foundation
 
-/// RenamePlan の Export / Import 用 DTO
 struct RenamePlanExport: Codable {
 
     // MARK: - Stored (Export)
@@ -20,37 +18,22 @@ struct RenamePlanExport: Codable {
 
     // MARK: - Back to Domain
 
-    /// Export DTO → Domain Model
     func toDomain() -> RenamePlan {
 
         let originalURL = URL(fileURLWithPath: originalPath)
-        let destinationURL =
-            URL(fileURLWithPath: targetParentPath)
-                .appendingPathComponent(targetName)
+        let targetParentURL = URL(fileURLWithPath: targetParentPath)
 
-        let context = ContextInfo(
-            currentParent: originalURL.deletingLastPathComponent(),
-            isUnderAuthorFolder: false,
-            detectedAuthorFolderName: nil,
-            duplicateNameExists: false
-        )
-
-        // Export では warnings / rules を完全復元できないため
-        // 最低限の NameNormalizer.Result を生成
-        let normalizeResult = NameNormalizer.Result(
+        // Export からは最小限の RenameItem を復元する
+        let item = RenameItem(
+            original: originalName,
             normalized: normalizedName,
-            warnings: [],
-            appliedRules: []
+            source: .imported
         )
 
         return RenamePlan(
             originalURL: originalURL,
-            destinationURL: destinationURL,
-            originalName: originalName,
-            normalizedName: normalizedName,
-            roles: [],
-            context: context,
-            normalizeResult: normalizeResult
+            targetParentURL: targetParentURL,
+            item: item
         )
     }
 }

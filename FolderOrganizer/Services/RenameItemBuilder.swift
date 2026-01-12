@@ -1,19 +1,18 @@
 // Services/RenameItemBuilder.swift
 //
-// FileScanService が収集した URL 一覧から、
-// UI やリネーム処理で使用する RenameItem を生成する。
-// 正規化・分類ロジックは Logic レイヤに委譲し、
-// このクラスは「橋渡し」だけを責務とする。
+// RenameItem を自動生成するビルダー
+// - NameNormalizer による正規化
+// - TextClassifier による issue 判定
+// - source は必ず .automatic
 //
 
 import Foundation
 
-/// RenameItem 生成専用ビルダー
 final class RenameItemBuilder {
 
     // MARK: - Public API
 
-    /// URL 一覧から RenameItem を生成する
+    /// URL 配列から RenameItem を生成
     func build(from urls: [URL]) -> [RenameItem] {
         urls.compactMap { url in
             buildRenameItem(from: url)
@@ -26,18 +25,29 @@ final class RenameItemBuilder {
     private func buildRenameItem(from url: URL) -> RenameItem? {
 
         let originalName = url.lastPathComponent
-
         guard !originalName.isEmpty else {
             return nil
         }
 
+        // 正規化
         let result = NameNormalizer.normalize(originalName)
         let normalizedName = result.normalized
 
+        // issue 判定
+        var issues: Set<RenameIssue> = []
+
+        if TextClassifier.isSubtitle(normalizedName) {
+            issues.insert(.subtitle)
+        } else if TextClassifier.isPotentialSubtitle(normalizedName) {
+            issues.insert(.potentialSubtitle)
+        }
+
+        // RenameItem 生成（確定形）
         return RenameItem(
             original: originalName,
             normalized: normalizedName,
-            flagged: originalName != normalizedName
+            source: .automatic,
+            issues: issues
         )
     }
 }

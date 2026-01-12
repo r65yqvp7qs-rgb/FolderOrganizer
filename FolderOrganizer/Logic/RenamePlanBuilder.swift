@@ -1,7 +1,6 @@
 // Logic/RenamePlanBuilder.swift
 //
-// RenamePlanEngine から渡された情報をまとめ、
-// 最終的な RenamePlan を生成するビルダー。
+// RenameItem を元に RenamePlan を組み立てる
 //
 
 import Foundation
@@ -9,26 +8,15 @@ import Foundation
 final class RenamePlanBuilder {
 
     func build(
+        item: RenameItem,
         originalURL: URL,
-        originalName: String,
-        normalizedName: String,
-        roles: [DetectedRole],
-        context: ContextInfo,
-        normalizeResult: NameNormalizer.Result
+        targetParentURL: URL
     ) -> RenamePlan {
 
-        // リネーム後の URL をここで確定
-        let destinationURL =
-            context.currentParent.appendingPathComponent(normalizedName)
-
-        return RenamePlan(
+        RenamePlan(
             originalURL: originalURL,
-            destinationURL: destinationURL,
-            originalName: originalName,
-            normalizedName: normalizedName,
-            roles: roles,
-            context: context,
-            normalizeResult: normalizeResult
+            targetParentURL: targetParentURL,
+            item: item
         )
     }
 }

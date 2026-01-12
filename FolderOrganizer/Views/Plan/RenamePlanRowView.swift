@@ -14,7 +14,7 @@ struct RenamePlanRowView: View {
         VStack(alignment: .leading, spacing: 4) {
 
             // 元名 / 変更後名
-            let originalName = plan.originalName
+            let originalName = plan.originalURL.lastPathComponent
             let modifiedName = plan.destinationURL.lastPathComponent
 
             // 差分表示

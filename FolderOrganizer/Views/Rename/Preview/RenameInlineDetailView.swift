@@ -15,12 +15,12 @@ struct RenameInlineDetailView: View {
 
             detailRow(
                 title: "Original",
-                value: plan.originalName
+                value: plan.originalURL.lastPathComponent
             )
 
             detailRow(
                 title: "Normalized",
-                value: plan.normalizedName
+                value: plan.item.finalName
             )
 
             if !plan.normalizeResult.warnings.isEmpty {

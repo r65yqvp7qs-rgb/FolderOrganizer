@@ -40,7 +40,7 @@ struct ApplyResultRowView: View {
     private var successView: some View {
         VStack(alignment: .leading, spacing: 2) {
 
-            Text(result.plan.originalName)
+            Text(result.plan.originalURL.lastPathComponent)
                 .font(.system(size: 12, design: .monospaced))
 
             if let undoInfo = result.undoInfo {

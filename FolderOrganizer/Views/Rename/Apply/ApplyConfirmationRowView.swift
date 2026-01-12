@@ -13,7 +13,7 @@ struct ApplyConfirmationRowView: View {
         VStack(alignment: .leading, spacing: 4) {
 
             // 元の名前
-            Text(plan.originalName)
+            Text(plan.originalURL.lastPathComponent)
                 .font(.system(size: 12, design: .monospaced))
 
             // 変更後の名前（URL から取得）

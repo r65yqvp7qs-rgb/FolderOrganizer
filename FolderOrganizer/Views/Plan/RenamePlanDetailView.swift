@@ -37,7 +37,7 @@ struct RenamePlanDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
 
             LabeledContent("Before") {
-                Text(plan.originalName)
+                Text(plan.originalURL.lastPathComponent)
                     .font(.system(size: 13, design: .monospaced))
             }
 

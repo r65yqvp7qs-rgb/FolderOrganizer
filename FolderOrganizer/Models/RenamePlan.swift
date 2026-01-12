@@ -1,39 +1,93 @@
 // Models/RenamePlan.swift
 //
-// 1つのファイル／フォルダに対する「リネーム計画」を表すモデル。
-// Apply / Undo / Export / 学習用途のすべての基準点となる。
-// このモデルが「真実のソース」。
+// 1 URL 分の Rename 適用計画（Apply 契約モデル）
+// - DryRun / Apply / Undo / Export / Import の共通基盤
+// - 旧コード互換のための computed property（destinationURL / normalizedName 等）も提供
 //
 
 import Foundation
 
-struct RenamePlan: Identifiable {
+struct RenamePlan: Identifiable, Hashable, Codable {
 
-    let id = UUID()
+    // MARK: - Identity
 
-    /// 元の URL
+    let id: UUID
+
+    // MARK: - Target
+
+    /// 元の URL（現在の場所）
     let originalURL: URL
 
-    /// リネーム後の URL（Apply 時に使用）
-    let destinationURL: URL
+    /// 親ディレクトリ（Apply 時の安全確認用）
+    let targetParentURL: URL
 
-    /// 元の名前
-    let originalName: String
+    // MARK: - Rename
 
-    /// 正規化後の名前（候補）
-    var normalizedName: String
+    /// 名前の差分情報
+    let item: RenameItem
 
-    /// 役割検出結果
-    let roles: [DetectedRole]
+    // MARK: - Computed (New)
 
-    /// 親フォルダなどの文脈情報
-    let context: ContextInfo
+    /// Apply 後の URL（確定）
+    var targetURL: URL {
+        targetParentURL.appendingPathComponent(item.finalName)
+    }
 
-    /// 正規化結果（warnings / appliedRules など）
-    let normalizeResult: NameNormalizer.Result
-    
-    /// 変更があるか（計算プロパティ）
-    var hasDiff: Bool {
-        originalName != normalizedName
+    /// 実際に名前が変わるか
+    var isChanged: Bool {
+        originalURL.lastPathComponent != item.finalName
+    }
+
+    // MARK: - Legacy compatibility（旧コード救済）
+
+    /// 旧: plan.originalName
+    var originalName: String {
+        originalURL.lastPathComponent
+    }
+
+    /// 旧: plan.normalizedName
+    var normalizedName: String {
+        item.finalName
+    }
+
+    /// 旧: plan.destinationURL
+    var destinationURL: URL {
+        targetURL
+    }
+
+    /// 旧: plan.normalizeResult.warnings を満たすための互換型
+    struct LegacyNormalizeResult: Hashable, Codable {
+        let warnings: [String]
+    }
+
+    /// 旧: plan.normalizeResult
+    /// - Note: warnings は issues から生成（必要十分な互換）
+    var normalizeResult: LegacyNormalizeResult {
+        let warnings: [String] = item.issues
+            .map { issue in
+                switch issue {
+                case .subtitle:
+                    return "サブタイトル検出"
+                case .potentialSubtitle:
+                    return "サブタイトルの可能性"
+                }
+            }
+            .sorted()
+
+        return LegacyNormalizeResult(warnings: warnings)
+    }
+
+    // MARK: - Init
+
+    init(
+        id: UUID = UUID(),
+        originalURL: URL,
+        targetParentURL: URL,
+        item: RenameItem
+    ) {
+        self.id = id
+        self.originalURL = originalURL
+        self.targetParentURL = targetParentURL
+        self.item = item
     }
 }
