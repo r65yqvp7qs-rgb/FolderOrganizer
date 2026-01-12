@@ -1,28 +1,18 @@
 // Services/RenameItemBuilder.swift
 //
-// RenameItem を自動生成するビルダー
-// - NameNormalizer による正規化
-// - TextClassifier による issue 判定
-// - source は必ず .automatic
+// URL から RenameItem を生成する責務
+// - NameNormalizer を使用
+// - Subtitle / PotentialSubtitle 判定
+// - Domain モデルを直接返す
 //
 
 import Foundation
 
 final class RenameItemBuilder {
 
-    // MARK: - Public API
+    // MARK: - Public
 
-    /// URL 配列から RenameItem を生成
-    func build(from urls: [URL]) -> [RenameItem] {
-        urls.compactMap { url in
-            buildRenameItem(from: url)
-        }
-    }
-
-    // MARK: - Internal
-
-    /// 単一 URL から RenameItem を生成
-    private func buildRenameItem(from url: URL) -> RenameItem? {
+    func buildRenameItem(from url: URL) -> RenameItem? {
 
         let originalName = url.lastPathComponent
         guard !originalName.isEmpty else {
@@ -46,7 +36,7 @@ final class RenameItemBuilder {
         return RenameItem(
             original: originalName,
             normalized: normalizedName,
-            source: .automatic,
+            source: .auto,          // ← ★ ここが修正点
             issues: issues
         )
     }
