@@ -1,127 +1,43 @@
+// FolderOrganizer/Views/Rename/Preview/RenamePreviewRow.swift
 //
-//  Views/Rename/Preview/RenamePreviewRow.swift
-//
-//  Inline Edit Row
-//  ・差分判定は original / normalized 比較のみ
-//  ・編集状態と差分状態を分離
+// 一覧の1行（旧/新）
+// - 旧/新の文字サイズは同じ
+// - 変更があったら「目印」を付ける（左の点）
 //
 
 import SwiftUI
 
 struct RenamePreviewRow: View {
 
-    // MARK: - Inputs
-
-    let plan: RenamePlan
+    let original: String
+    let normalized: String
     let isSelected: Bool
-    let showSpaceMarkers: Bool
-
-    let onCommit: (String) -> Void
-    let onCancel: () -> Void
-
-    // MARK: - State
-
-    @State private var editingText: String = ""
-    @State private var isEditing: Bool = false
-    @FocusState private var isFocused: Bool
-
-    // MARK: - Constants
-
-    private let editFontSize: CGFloat = 15 * 1.8
-
-    /// 差分があるか（唯一の判定）
-    private var hasDiff: Bool {
-        plan.originalURL.lastPathComponent != plan.item.finalName
-    }
-
-    // MARK: - Body
+    let isChanged: Bool
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
 
-            // 差分インジケータ（編集状態とは無関係）
-            Image(systemName: hasDiff ? "pencil.circle.fill" : "circle")
-                .foregroundColor(hasDiff ? .accentColor : .secondary)
-                .frame(width: 18)
+            Circle()
+                .fill(isChanged ? Color.orange : Color.clear)
+                .frame(width: 8, height: 8)
+                .padding(.top, 6)
 
             VStack(alignment: .leading, spacing: 4) {
+                Text(original)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
 
-                if isEditing {
-
-                    // 編集時：元の名前（参照用）
-                    Text(plan.originalURL.lastPathComponent)
-                        .font(.system(size: editFontSize, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    // 編集対象
-                    TextEditor(text: $editingText)
-                        .font(.system(
-                            size: editFontSize,
-                            weight: .semibold,
-                            design: .monospaced
-                        ))
-                        .scrollDisabled(true)
-                        .focused($isFocused)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, -4)
-                        .padding(.vertical, -6)
-                        .background(Color.clear)
-                        .onKeyPress { press in
-                            handleKey(press)
-                        }
-
-                } else {
-
-                    // 非編集時：Diff 表示
-                    DiffTextView(
-                        original: plan.originalURL.lastPathComponent,
-                        normalized: plan.item.finalName,
-                        showSpaceMarkers: showSpaceMarkers
-                    )
-                }
+                Text(normalized)
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
             }
-
-            Spacer()
+            .font(.system(size: 14)) // ✅ 旧/新 同じサイズ
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, isSelected ? 10 : 6)
-        .padding(.horizontal, 8)
+        .padding(10)
         .background(
-            isSelected
-            ? Color.accentColor.opacity(0.10)
-            : Color.clear
+            RoundedRectangle(cornerRadius: 10)
+                .fill(isSelected ? Color.blue.opacity(0.25) : Color(NSColor.windowBackgroundColor).opacity(0.25))
         )
-        .cornerRadius(8)
-        .onChange(of: isSelected) { _, selected in
-            if selected {
-                editingText = plan.item.finalName
-                isEditing = true
-                DispatchQueue.main.async {
-                    isFocused = true
-                }
-            } else if isEditing {
-                isEditing = false
-                onCancel()
-            }
-        }
-    }
-
-    // MARK: - Key Handling
-
-    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
-        switch press.key {
-        case .return:
-            isEditing = false
-            onCommit(editingText)
-            return .handled
-
-        case .escape:
-            isEditing = false
-            onCancel()
-            return .handled
-
-        default:
-            return .ignored
-        }
     }
 }
