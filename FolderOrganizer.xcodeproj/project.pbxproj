@@ -38,16 +38,7 @@
 		541D37522EF814DD00708A8F /* Exceptions for "FolderOrganizer" folder in "FolderOrganizer" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Domain/Export/_ApplyResultLog.swift,
-				Domain/Export/_RenamePlanLog.swift,
-				Domain/Export/_RenameSessionLog.swift,
-				Domain/Import/RenameImportMapper.swift,
-				Export/ExportService.swift,
-				Logic/ApplyPreflightChecker.swift,
 				Tests/FolderOrganizerTests.swift,
-				Views/Apply/IssueRow.swift,
-				Views/Rename/Apply/ApplyPreflightView.swift,
-				Views/Rename/Apply/ChangeSummaryView.swift,
 			);
 			target = 5488C3332EDDCB750084590A /* FolderOrganizer */;
 		};
