@@ -1,6 +1,6 @@
+// FolderOrganizer/Views/Plan/RenamePlanRowView.swift
 //
-//  RenamePlanRowView.swift
-//  FolderOrganizer
+// Plan 一覧の 1 行表示
 //
 
 import SwiftUI
@@ -8,34 +8,30 @@ import SwiftUI
 struct RenamePlanRowView: View {
 
     let plan: RenamePlan
-    let showSpaceMarkers: Bool   // 呼び出し元都合なので保持でOK
+    let showSpaceMarkers: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
 
-            // 元名 / 変更後名
             let originalName = plan.originalURL.lastPathComponent
-            let modifiedName = plan.destinationURL.lastPathComponent
+            let finalName = plan.item.finalName
 
-            // 差分表示
             DiffTextView(
                 original: originalName,
-                normalized: modifiedName,
+                final: finalName,
                 showSpaceMarkers: showSpaceMarkers
             )
-            // MARK: - Warning 表示
-            let warnings = plan.normalizeResult.warnings
 
-            if !warnings.isEmpty {
-                HStack(spacing: 4) {
+            if !plan.item.issues.isEmpty {
+                HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
 
-                    Text("\(warnings.count) warning")
+                    Text("\(plan.item.issues.count) issue")
                         .font(.caption)
                         .foregroundColor(.orange)
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
         }
         .padding(.vertical, 6)

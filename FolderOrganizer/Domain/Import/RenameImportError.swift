@@ -1,6 +1,4 @@
-//
-//  RenameImportError.swift
-//  FolderOrganizer
+// FolderOrganizer/Domain/Import/RenameImportError.swift
 //
 
 import Foundation

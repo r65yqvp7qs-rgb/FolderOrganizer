@@ -1,8 +1,7 @@
+// FolderOrganizer/App/AppTheme.swift
 //
-//  AppTheme.swift
-//
-//  アプリ全体のテーマ定義
-//  ・Diff / SpaceMarker 用カラーを集約
+// アプリ全体の色・スタイル定義
+// ・Issue 可視化用の色を追加
 //
 
 import SwiftUI
@@ -11,27 +10,16 @@ enum AppTheme {
 
     enum colors {
 
-        // MARK: - Text
-
+        // 既存色（※他にも定義があればそのまま残す）
         static let primaryText = Color.primary
         static let secondaryText = Color.secondary
 
-        // MARK: - Diff Colors（STEP 3）
+        // MARK: - Issue Colors（v0.2）
 
-        static let diffDelete  = Color.red
-        static let diffInsert  = Color.green
-        static let diffReplace = Color.orange.opacity(0.85)
-        static let diffSpace   = Color.accentColor.opacity(0.55)
+        /// RenameIssue.warning 用（目立ちすぎない注意色）
+        static let issueWarning = Color.yellow.opacity(0.85)
 
-        // MARK: - SpaceMarker Colors（共通）
-
-        /// 半角スペース
-        static let spaceHalf = Color.accentColor.opacity(0.45)
-
-        /// 全角スペース
-        static let spaceFull = Color.accentColor.opacity(0.65)
-
-        /// 連続スペース（複数）
-        static let spaceMultiple = Color.accentColor.opacity(0.55)
+        /// RenameIssue.error 用（明確な警告色）
+        static let issueError = Color.red
     }
 }

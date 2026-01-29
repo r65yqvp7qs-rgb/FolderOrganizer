@@ -34,31 +34,9 @@
 		54F62DC52EF902C700D14F92 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		541D37522EF814DD00708A8F /* Exceptions for "FolderOrganizer" folder in "FolderOrganizer" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Export/ExportService.swift,
-				Tests/FolderOrganizerTests.swift,
-			);
-			target = 5488C3332EDDCB750084590A /* FolderOrganizer */;
-		};
-		541D37532EF814DD00708A8F /* Exceptions for "FolderOrganizer" folder in "FolderOrganizerTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Tests/FolderOrganizerTests.swift,
-			);
-			target = 5488C3442EDDCB780084590A /* FolderOrganizerTests */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5488C3362EDDCB750084590A /* FolderOrganizer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				541D37522EF814DD00708A8F /* Exceptions for "FolderOrganizer" folder in "FolderOrganizer" target */,
-				541D37532EF814DD00708A8F /* Exceptions for "FolderOrganizer" folder in "FolderOrganizerTests" target */,
-			);
 			path = FolderOrganizer;
 			sourceTree = "<group>";
 		};

@@ -1,9 +1,9 @@
-// Views/Apply/ApplyExecutionView.swift
+// FolderOrganizer/Views/Apply/ApplyExecutionView.swift
 //
-// Apply を実行中の進捗表示画面
-// ・RenamePlan を受け取り、RenameApplyService を実行
-// ・完了後、ApplyResult 配列を onFinish で返す
-// ・この View 自身は結果を解釈しない（責務分離）
+// RenamePlan を実ファイルへ適用する実行ビュー。
+// - v0.2 主目的：Apply 完了時に RenameSessionLog を自動保存（JSON Export）する
+// - このブランチでは Undo 実行 UI / Service は未導入なので、RollbackInfo は表示のみ
+// - 保存失敗は UX に影響させない（補助ログ）
 //
 
 import SwiftUI
@@ -12,52 +12,73 @@ struct ApplyExecutionView: View {
 
     // MARK: - Inputs
 
-    /// 適用対象の RenamePlan 一覧
+    let rootURL: URL
     let plans: [RenamePlan]
-
-    /// Apply 実行 Service
     let applyService: RenameApplyService
-
-    /// 完了時コールバック
-    let onFinish: ([ApplyResult]) -> Void
+    let onClose: () -> Void
 
     // MARK: - State
 
-    @State private var isRunning: Bool = false
+    @State private var isExecuting: Bool = false
+    @State private var results: [ApplyResult] = []
+    @State private var rollbackInfo: RollbackInfo?
 
-    // MARK: - View
+    // MARK: - AutoSave
+
+    private let autoSaveService: RenameSessionLogAutoSaveService =
+        DefaultRenameSessionLogAutoSaveService()
+
+    // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
 
-            Text("Apply 実行中")
+            Text("Apply 実行")
                 .font(.headline)
 
-            ProgressView()
-                .progressViewStyle(.linear)
+            if isExecuting {
+                ProgressView("ファイルをリネーム中…")
+            } else {
+                ApplyResultList(
+                    results: results,
+                    rollbackInfo: rollbackInfo
+                )
+            }
 
-            Text("件数: \(plans.count)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack {
+                Spacer()
 
-            Spacer()
+                Button("閉じる") {
+                    onClose()
+                }
+            }
         }
-        .padding(24)
+        .padding()
         .onAppear {
-            run()
+            executeApplyIfNeeded()
         }
     }
 
-    // MARK: - Execute
+    // MARK: - Apply
 
-    private func run() {
-        guard !isRunning else { return }
-        isRunning = true
+    private func executeApplyIfNeeded() {
+        guard !isExecuting else { return }
 
-        applyService.apply(plans: plans) { results in
-            DispatchQueue.main.async {
-                onFinish(results)
-            }
+        isExecuting = true
+
+        // ✅ 現行 RenameApplyService の completion は (results, rollbackInfo)
+        applyService.apply(plans: plans) { results, rollbackInfo in
+            self.results = results
+            self.rollbackInfo = rollbackInfo
+            self.isExecuting = false
+
+            // ✅ v0.2 の主目的：Apply 完了時に 1 回だけ自動保存
+            autoSaveService.autoSaveAppliedSnapshot(
+                rootURL: rootURL,
+                plans: plans,
+                results: results,
+                rollbackInfo: rollbackInfo
+            )
         }
     }
 }

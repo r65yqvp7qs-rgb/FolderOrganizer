@@ -7,7 +7,25 @@
 		<key>FolderOrganizer.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>4</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>5488C3332EDDCB750084590A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>5488C3442EDDCB780084590A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>5488C34E2EDDCB780084590A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

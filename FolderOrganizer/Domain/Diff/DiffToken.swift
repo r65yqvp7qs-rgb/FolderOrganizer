@@ -1,15 +1,12 @@
-//
-//  Domain/Diff/DiffToken.swift
-//
-//  Diff 表示用トークン（STEP 3-6）
-//  ・operation に replace を追加
-//
+// Domain/Diff/DiffToken.swift
 
 import Foundation
 
+/// Diff 表示用の最小トークン
+/// DiffOperation は既存定義を使用する（再定義しない）
 struct DiffToken: Identifiable {
     let id = UUID()
 
-    let character: String
+    let char: Character
     let operation: DiffOperation
 }

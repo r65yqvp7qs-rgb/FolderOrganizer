@@ -1,6 +1,7 @@
+// FolderOrganizer/App/FolderOrganizerApp.swift
 //
-//  FolderOrganizerApp.swift
-//  FolderOrganizer
+// アプリ起動点
+// - WindowGroup で ContentView を表示する
 //
 
 import SwiftUI
@@ -11,6 +12,5 @@ struct FolderOrganizerApp: App {
         WindowGroup {
             ContentView()
         }
-        .windowStyle(.titleBar)
     }
 }

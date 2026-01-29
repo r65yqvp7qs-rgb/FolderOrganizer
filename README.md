@@ -121,3 +121,78 @@ Views
 
 現在は **Apply / Undo が一往復できる安定版**です。  
 設計の芯が固まり、機能追加や調整を安全に行える状態になっています。
+
+--
+
+# FolderOrganizer (v0.2)
+
+macOS 向けのフォルダ名整理・リネーム支援アプリです。  
+大量のフォルダを安全にリネームし、その履歴を **JSON ログとして自動保存** します。
+
+---
+
+## ✨ 特徴（v0.2）
+
+### ✅ 安全なフォルダリネーム
+- フォルダ配下をスキャンしてリネーム候補を生成
+- Apply 前に一覧で確認
+- skipped / failure を含めた結果表示
+
+### ✅ JSON Export（自動保存）
+- Apply 実行ごとに **RenameSessionLog を自動保存**
+- 保存場所：
+~/Library/Application Support/FolderOrganizer/Logs/
+- 失敗・スキップを含めた「実行結果の完全スナップショット」
+
+### ✅ Undo 対応のための情報保持
+- Undo 用 move 情報をログに含めて保存
+- v0.3 以降で Import / Undo 復元に利用可能
+
+---
+
+## 📦 保存されるログ内容（概要）
+
+- セッションID
+- 実行日時
+- 対象ルートフォルダ
+- 各 RenamePlan の詳細
+- original / final name
+- issue（subtitle / potentialSubtitle など）
+- Apply 結果
+- success / skipped / failure
+- Undo 用 move 情報
+
+すべて **人間が読める JSON** として保存されます。
+
+---
+
+## 🚧 現在できないこと（v0.2）
+
+- JSON ログの Import
+- UI からの Export 操作
+- Undo の実行（ログは保存されるが UI は未提供）
+
+---
+
+## 🔮 今後の予定
+
+- v0.3：ログ Import / Undo 復元
+- Rename 履歴を使ったルール学習
+- より高度な分類・判定ロジックの追加
+
+---
+
+## 🛠 技術スタック
+
+- Swift / SwiftUI
+- macOS
+- Domain / Infrastructure / View 分離設計
+- JSON Export（Codable）
+
+---
+
+## 📌 バージョン
+
+- v0.2.0  
+- JSON Export（自動保存）対応
+- Apply フロー安定版

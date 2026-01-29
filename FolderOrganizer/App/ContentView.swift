@@ -1,8 +1,9 @@
-// App/ContentView.swift
+// FolderOrganizer/App/ContentView.swift
 //
-// メイン画面
-// - フォルダ選択 → URL スキャン → RenamePlan 生成 → プレビュー
-// - Apply / Undo の FlowState 制御
+// ルート画面（Browse）
+// - 「フォルダを選択」ボタンで NSOpenPanel を開く
+// - 選択されたフォルダから FolderTreeBuilder でツリーを構築
+// - FolderBrowseView に rootNode を渡して表示
 //
 
 import SwiftUI
@@ -10,166 +11,69 @@ import AppKit
 
 struct ContentView: View {
 
-    // MARK: - Flow
+    @State private var selectedFolderURL: URL?
+    @State private var rootNode: FolderNode?
+    @State private var errorMessage: String?
 
-    @State private var flowState: RenameFlowState = .preview
+    private let treeBuilder = FolderTreeBuilder()
 
-    // MARK: - Data
-
-    @State private var plans: [RenamePlan] = []
-    @State private var applyResults: [ApplyResult] = []
-    @State private var undoResults: [UndoResult] = []
-    @State private var rollbackInfo: RollbackInfo? = nil
-
-    // MARK: - Preview States
-
-    @State private var selectionIndex: Int? = nil
-    @State private var showSpaceMarkers: Bool = true
-
-    // MARK: - Services
-
-    private let scanService = FileScanService()
-
-    // MARK: - View
-
-    @ViewBuilder
     var body: some View {
-        switch flowState {
+        VStack(alignment: .leading, spacing: 8) {
 
-        case .preview:
-            VStack(spacing: 0) {
-
-                HStack {
-                    Button("フォルダを選択") {
-                        selectFolder()
-                    }
-
-                    Spacer()
-
-                    Text("\(plans.count) 件")
-                        .foregroundStyle(.secondary)
+            // Header
+            HStack(spacing: 12) {
+                Button("フォルダを選択") {
+                    selectFolder()
                 }
-                .padding()
 
-                Divider()
-
-                RenamePreviewList(
-                    plans: plans,
-                    selectionIndex: $selectionIndex,
-                    showSpaceMarkers: showSpaceMarkers,
-                    onCommit: handleCommit
-                )
-
-                Divider()
-
-                HStack {
-                    Toggle("スペース可視化", isOn: $showSpaceMarkers)
-
-                    Spacer()
-
-                    Button("Apply") {
-                        startApply()
-                    }
-                    .keyboardShortcut(.defaultAction)
-                    .disabled(plans.isEmpty)
+                if let url = selectedFolderURL {
+                    Text(url.path)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                } else {
+                    Text("未選択")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                .padding()
             }
 
-        case .applying:
-            ProgressView("Applying...")
+            Divider()
 
-        case .applyResult(let results):
-            ApplyResultView(
-                results: results,
-                rollbackInfo: rollbackInfo,
-                onUndo: startUndo(rollbackInfo:),
-                onClose: { flowState = .preview }
-            )
-
-        case .undoing:
-            ProgressView("Undoing...")
-
-        case .undoResult(let results):
-            if let rollbackInfo {
-                UndoResultView(
-                    undoResults: results,
-                    rollbackInfo: rollbackInfo,
-                    onClose: { flowState = .preview }
-                )
-            } else {
-                Text("Undo 情報がありません")
+            if let errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
             }
+
+            // Tree
+            FolderBrowseView(rootNode: rootNode)
         }
+        .padding()
+        .frame(minWidth: 900, minHeight: 600)
     }
 
-    // MARK: - Folder Select
+    // MARK: - Folder Picker
 
     private func selectFolder() {
         let panel = NSOpenPanel()
-        panel.canChooseFiles = false
         panel.canChooseDirectories = true
+        panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
+        panel.prompt = "選択"
 
         if panel.runModal() == .OK, let url = panel.url {
-            loadPlans(from: url)
+            selectedFolderURL = url
+            rebuildTree(for: url)
         }
     }
 
-    private func loadPlans(from rootURL: URL) {
-        let result = scanService.scan(rootURL: rootURL)
-
-        plans = result.urls.map { url in
-            let normalizeResult = NameNormalizer.normalize(url.lastPathComponent)
-
-            let item = RenameItem(
-                original: url.lastPathComponent,
-                normalized: normalizeResult.normalized,
-                source: .auto,
-                issues: []
-            )
-
-            return RenamePlan(
-                originalURL: url,
-                targetParentURL: url.deletingLastPathComponent(),
-                item: item
-            )
+    private func rebuildTree(for url: URL) {
+        do {
+            errorMessage = nil
+            rootNode = try treeBuilder.buildTree(from: url)
+        } catch {
+            rootNode = nil
+            errorMessage = "ツリー構築に失敗しました: \(error.localizedDescription)"
         }
-
-        selectionIndex = nil
-    }
-
-    // MARK: - Actions
-
-    private func handleCommit(index: Int, newName: String) {
-        guard plans.indices.contains(index) else { return }
-
-        let oldPlan = plans[index]
-        let oldItem = oldPlan.item
-
-        let updatedItem = RenameItem(
-            id: oldItem.id,
-            original: oldItem.original,
-            normalized: newName,
-            source: oldItem.source,
-            issues: oldItem.issues
-        )
-
-        plans[index] = RenamePlan(
-            id: oldPlan.id,
-            originalURL: oldPlan.originalURL,
-            targetParentURL: oldPlan.targetParentURL,
-            item: updatedItem
-        )
-    }
-
-    private func startApply() {
-        flowState = .applying
-        flowState = .applyResult(results: applyResults)
-    }
-
-    private func startUndo(rollbackInfo: RollbackInfo) {
-        flowState = .undoing
-        flowState = .undoResult(results: undoResults)
     }
 }

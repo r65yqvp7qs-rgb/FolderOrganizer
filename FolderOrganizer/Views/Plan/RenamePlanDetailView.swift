@@ -1,8 +1,6 @@
+// Views/Plan/RenamePlanDetailView.swift
 //
-//  RenamePlanDetailView.swift
-//  FolderOrganizer
-//
-//  RenamePlan の詳細表示
+// RenamePlan 詳細表示
 //
 
 import SwiftUI
@@ -12,44 +10,48 @@ struct RenamePlanDetailView: View {
     let plan: RenamePlan
 
     var body: some View {
-        Form {
+        VStack(alignment: .leading, spacing: 12) {
 
-            // MARK: - Rename
-            Section("Rename") {
-                renameSection
+            LabeledContent("Target Parent Path") {
+                Text(plan.targetParentURL.path)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
             }
 
-            // MARK: - Warnings（NormalizeResult 由来）
-            if !plan.normalizeResult.warnings.isEmpty {
-                Section("Warnings") {
-                    ForEach(plan.normalizeResult.warnings.indices, id: \.self) { index in
-                        Text(plan.normalizeResult.warnings[index])
+            Divider()
+
+            Section("Item") {
+                VStack(alignment: .leading, spacing: 8) {
+
+                    LabeledContent("original") {
+                        Text(plan.item.original)
+                            .font(.system(size: 13, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+
+                    LabeledContent("finalName") {
+                        Text(plan.item.finalName)
+                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
+            }
+
+            if !plan.item.issues.isEmpty {
+                Divider()
+
+                Section("Issues") {
+                    ForEach(
+                        Array(plan.item.issues).sorted(by: { $0.rawValue < $1.rawValue }),
+                        id: \.self
+                    ) { issue in
+                        Text(issue.rawValue)
                             .foregroundColor(.orange)
                     }
                 }
             }
         }
         .padding()
-    }
-
-    // MARK: - Rename Section
-    private var renameSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-
-            LabeledContent("Before") {
-                Text(plan.originalURL.lastPathComponent)
-                    .font(.system(size: 13, design: .monospaced))
-            }
-
-            LabeledContent("After") {
-                Text(destinationName)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private var destinationName: String {
-        plan.destinationURL.lastPathComponent
     }
 }
